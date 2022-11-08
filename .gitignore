@@ -1,20 +1,8 @@
-# maven build target for jRAPL/src
-target/
+# maven build targets
+src/jrapl/target/
+src/native/target/
 
-#temp files i generate, from testing AsyncMonitor.writeToFile() method
-AsyncMonitor-Java.csv
-AsyncMonitor-Java-metainfo.json
-AsyncMonitor-CDYNAMIC_ARRAY.csv
-AsyncMonitor-CDYNAMIC_ARRAY-metainfo.json
-AsyncMonitor-CLINKED_LIST.csv
-AsyncMonitor-CLINKED_LIST-metainfo.json
-
-*.swp
-
-.vscode
-.settings
-.classpath
-.factorypath
+# eclipse integration
 .project
-
-__pycache__
+.classpath
+.settings

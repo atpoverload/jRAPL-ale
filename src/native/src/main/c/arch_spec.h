@@ -1,9 +1,11 @@
+#ifndef ARCH_SPEC_H
+#define ARCH_SPEC_H
+
 #include <stdint.h>
 #include <unistd.h>
-#ifndef _ARCH_SPEC_H
-#define _ARCH_SPEC_H
-#include "msr.h"
+
 #include "micro_architectures.h"
+#include "msr.h"
 
 #define CPUID				\
     __asm__ volatile ("cpuid"   	\
@@ -27,7 +29,7 @@ typedef struct cpuid_info_t {
 	uint32_t edx;
 } cpuid_info_t;
 
-/** 
+/**
   *	None of these are global variables any more
   *
   *	extern uint32_t eax, ebx, ecx, edx;
@@ -79,7 +81,7 @@ getSocketNum();
 rapl_msr_unit
 get_rapl_unit();
 
-int 
+int
 get_power_domains_supported(uint32_t micro_architecture);
 
 /*

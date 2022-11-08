@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
+
 #include "arch_spec.h"
 #include "msr.h"
 
@@ -137,7 +138,7 @@ get_num_pkg_core() {
 
 	Below used to be global variables (hey i made these not global any more, should
     probably update the comments for all the functions at some point...)
-    
+
 	  num_core_thread; 	//number of physical threads per core
 	  num_pkg_thread; 	//number of physical threads per package
 	  num_pkg_core;		//number of cores per package
@@ -158,9 +159,9 @@ int
 get_power_domains_supported(uint32_t micro_architecture) {
 	switch (micro_architecture) {
 		case KABYLAKE:			case BROADWELL:
-		
+
 			return DRAM_GPU_CORE_PKG;
-		
+
 		case SANDYBRIDGE_EP:	case HASWELL1:
 		case HASWELL2:			case HASWELL3:
 		case HASWELL_EP:		case SKYLAKE1:
@@ -168,11 +169,11 @@ get_power_domains_supported(uint32_t micro_architecture) {
 		case APOLLOLAKE:		case COFFEELAKE2:
 
 			return DRAM_CORE_PKG;
-		
+
 		case SANDYBRIDGE:		case IVYBRIDGE:
-		
+
 			return GPU_CORE_PKG;
-		
+
 		default:
 			return UNDEFINED_ARCHITECTURE;
 	}

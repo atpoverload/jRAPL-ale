@@ -23,7 +23,7 @@ static rapl_msr_unit rapl_unit;
 static uint64_t num_sockets;
 static double wraparound_energy = -1;
 static double broadwell_dram_wraparound_energy = -1;
-static char csv_delimiter = ',';
+static char csv_delimiter = ';';
 
 // intended for the case of non-american locales who use commas instead of periods for stringifying floats.
 // most likely will be set to ';' in most cases regarding this, but can also be set to tabs or what have you
@@ -176,7 +176,7 @@ measure_energy_between_stat_check(energy_stat_t start_stat, energy_stat_t stop_s
 }
 
 static void
-energy_info_csv_header(char csv_header[512], char* time_column_label/*, char csv_delimiter*/) { 
+energy_info_csv_header(char csv_header[512], char* time_column_label/*, char csv_delimiter*/) {
 	int offset = 0;
 	const char* format;
 	switch(power_domains_supported) {
