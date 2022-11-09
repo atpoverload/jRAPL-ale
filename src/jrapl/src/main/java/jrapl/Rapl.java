@@ -20,7 +20,7 @@ public final class Rapl {
         if (index >= 0) {
           int componentIndex = COMPONENT_COUNT * socket + index;
           energy[socket][component.ordinal()] =
-              // TODO: replace() is a fix for localiztion issues (add the issue)
+              // TODO: replace() is a fix for localization issues (add the issue)
               Double.parseDouble(entries[componentIndex].replace(",", "."));
         }
       }
