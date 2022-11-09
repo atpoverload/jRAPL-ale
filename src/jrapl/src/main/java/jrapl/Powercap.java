@@ -1,4 +1,4 @@
-package jrapl.powercap;
+package jrapl;
 
 import java.io.BufferedReader;
 import java.io.File;
