@@ -28,7 +28,7 @@ Java_jrapl_Rapl_sockets(JNIEnv * env, jclass jcls) {
 }
 
 JNIEXPORT jstring JNICALL
-Java_jrapl_Rapl_componentIndices(JNIEnv* env, jclass jcls) {
+Java_jrapl_Rapl_components(JNIEnv* env, jclass jcls) {
 	char* order;
 	switch(get_power_domains_supported(get_micro_architecture())) {
 		case DRAM_GPU_CORE_PKG:

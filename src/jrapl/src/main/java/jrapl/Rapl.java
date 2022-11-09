@@ -10,8 +10,11 @@ public final class Rapl {
 
   private static final int COMPONENT_COUNT;
   private static final int[] COMPONENT_INDICES;
+  // TODO: the delimiter is currently hacked-in to be ;. this was done because of the formatting
+  // issue associated with , vs . on certain locales
   private static final String ENERGY_STRING_DELIMITER = ";";
 
+  /** Returns an {@link EnergySample} populated by parsing the string returned by {@ readNative}. */
   static EnergySample sample() {
     double[][] energy = new double[SOCKET_COUNT][EnergySample.Component.values().length];
     String[] entries = readNative().split(ENERGY_STRING_DELIMITER);
@@ -38,12 +41,20 @@ public final class Rapl {
     return new EnergySample(timestamp, energy);
   }
 
-  /** Returns the energy of each component as a delimited string. */
-  static native String readNative();
+  /**
+   * Returns the energy of each component and the current timestamp as a delimited string. The
+   * energy values are floating point numbers representing the number of joules since the last boot.
+   * The order will be each socket's {@code components} followed by the microsecond timestamp:
+   *
+   * <p>socket0_component0,socket0_component1,socket1_component0,socket1_component1,...,timestamp
+   */
+  private static native String readNative();
 
+  /** Returns the number of sockets on the system. */
   private static native int sockets();
 
-  private static native String componentIndices();
+  /** Returns the available components as a string ("dram,core,pkg"/"dram,core,gpu,pkg"/etc). */
+  private static native String components();
 
   static {
     NativeLibrary.initialize();
@@ -53,7 +64,7 @@ public final class Rapl {
     // TODO -- there's a 5th possible power domain, right? like full motherboard energy or something
     COMPONENT_INDICES = new int[] {-1, -1, -1, -1};
     int index = 0;
-    for (String component : componentIndices().split(",")) {
+    for (String component : components().split(",")) {
       switch (component) {
         case "dram":
           COMPONENT_INDICES[EnergySample.Component.DRAM.ordinal()] = index++;
