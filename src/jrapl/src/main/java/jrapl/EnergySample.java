@@ -57,19 +57,19 @@ public class EnergySample {
     ArrayList<String> json = new ArrayList<>();
     json.add("[");
     for (int socket = 0; socket < this.energy.length; socket++) {
-      json.add("\t{");
-      json.add(String.format("\t\t\"timestamp\": %d,", timestamp.toEpochMilli()));
+      json.add("  {");
+      json.add(String.format("    \"timestamp\": %d,", timestamp.toEpochMilli()));
       for (Component component : Component.values()) {
         json.add(
             String.format(
-                "\t\t\"%s\": %f,",
+                "    \"%s\": %f,",
                 component.name().toLowerCase(), this.energy[socket][component.ordinal()]));
       }
-      json.add(String.format("\t\t\"socket\": %d", socket));
+      json.add(String.format("    \"socket\": %d", socket));
       if (socket + 1 < this.energy.length) {
-        json.add("\t},");
+        json.add("  },");
       } else {
-        json.add("\t}");
+        json.add("  }");
       }
     }
     json.add("]");

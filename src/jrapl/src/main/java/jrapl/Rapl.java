@@ -1,6 +1,7 @@
 package jrapl;
 
 import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 
 /** Simple wrapper around rapl access. */
 public final class Rapl {
@@ -12,8 +13,9 @@ public final class Rapl {
 
   static EnergySample sample() {
     double[][] energy = new double[SOCKET_COUNT][EnergySample.Component.values().length];
-
     String[] entries = readNative().split(ENERGY_STRING_DELIMITER);
+
+    // pull out energy values
     for (int socket = 0; socket < SOCKET_COUNT; socket++) {
       for (EnergySample.Component component : EnergySample.Component.values()) {
         int index = COMPONENT_INDICES[component.ordinal()];
@@ -26,7 +28,13 @@ public final class Rapl {
       }
     }
 
-    return new EnergySample(Instant.now(), energy);
+    // parse the timestamp
+    long ts = Long.parseLong(entries[entries.length - 1]);
+    long seconds = TimeUnit.MICROSECONDS.toSeconds(ts);
+    long nanos = TimeUnit.MICROSECONDS.toNanos(ts) - TimeUnit.SECONDS.toNanos(seconds);
+    Instant timestamp = Instant.ofEpochSecond(seconds, nanos);
+
+    return new EnergySample(timestamp, energy);
   }
 
   /** Returns the energy of each component as a delimited string. */
