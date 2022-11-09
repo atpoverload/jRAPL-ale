@@ -62,10 +62,10 @@ public class EnergySample {
       for (Component component : Component.values()) {
         json.add(
             String.format(
-                "\t\t\"%s\": %d,",
+                "\t\t\"%s\": %f,",
                 component.name().toLowerCase(), this.energy[socket][component.ordinal()]));
       }
-      json.add(String.format("\t\t\"socket\": %d", socket + 1));
+      json.add(String.format("\t\t\"socket\": %d", socket));
       if (socket + 1 < this.energy.length) {
         json.add("\t},");
       } else {
