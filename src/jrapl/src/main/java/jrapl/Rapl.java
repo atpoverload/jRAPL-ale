@@ -6,19 +6,19 @@ import java.time.Instant;
 public final class Rapl {
   public static final int SOCKET_COUNT;
 
-  private static final int COMPONENT_COUNT = EnergySample.Component.values().length;
+  private static final int COMPONENT_COUNT;
   private static final int[] COMPONENT_INDICES;
   private static final String ENERGY_STRING_DELIMITER = ";";
 
   static EnergySample sample() {
-    double[][] energy = new double[SOCKET_COUNT][COMPONENT_COUNT];
+    double[][] energy = new double[SOCKET_COUNT][EnergySample.Component.values().length];
 
     String[] entries = readNative().split(ENERGY_STRING_DELIMITER);
     for (int socket = 0; socket < SOCKET_COUNT; socket++) {
       for (EnergySample.Component component : EnergySample.Component.values()) {
         int index = COMPONENT_INDICES[component.ordinal()];
         if (index >= 0) {
-          int componentIndex = COMPONENT_COUNT * socket + COMPONENT_INDICES[component.ordinal()];
+          int componentIndex = COMPONENT_COUNT * socket + index;
           energy[socket][component.ordinal()] =
               // TODO: replace() is a fix for localiztion issues (add the issue)
               Double.parseDouble(entries[componentIndex].replace(",", "."));
@@ -62,6 +62,7 @@ public final class Rapl {
           continue;
       }
     }
+    COMPONENT_COUNT = index;
   }
 
   public static void main(String[] args) {
