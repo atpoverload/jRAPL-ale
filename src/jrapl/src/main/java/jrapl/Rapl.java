@@ -1,6 +1,7 @@
 package jrapl;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 /** Simple wrapper around rapl access. */
@@ -73,7 +74,29 @@ public final class Rapl {
     COMPONENT_COUNT = index;
   }
 
-  public static void main(String[] args) {
-    System.out.println(sample().toJson());
+  public static void main(String[] args) throws Exception {
+    System.out.println("RAPL initialized");
+
+    System.out.println(String.format("Socket count: %d", SOCKET_COUNT));
+
+    ArrayList<EnergySample.Component> components = new ArrayList<>();
+    for (EnergySample.Component component : EnergySample.Component.values()) {
+      if (COMPONENT_INDICES[component.ordinal()] > -1) {
+        components.add(component);
+      }
+    }
+    if (components.isEmpty()) {
+      System.out.println("No components found!");
+      return;
+    }
+    System.out.println(String.format("Available components: %s", components));
+
+    EnergySample lastSample;
+    while (true) {
+      EnergySample sample = sample();
+      System.out.println(sample.toJson());
+      lastSample = sample;
+      Thread.sleep(1000);
+    }
   }
 }
