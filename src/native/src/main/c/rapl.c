@@ -14,7 +14,7 @@
 #include "msr.h"
 
 JNIEXPORT jstring JNICALL
-Java_jrapl_Rapl_readEnergyStats(JNIEnv *env, jclass jcls) {
+Java_jrapl_Rapl_readNative(JNIEnv *env, jclass jcls) {
 	char energy_str[512];
 	energy_stat_t energy_stat_per_socket[getSocketNum()];
 	EnergyStatCheck(energy_stat_per_socket);
