@@ -146,9 +146,9 @@ public final class Rapl {
       return;
     }
     System.out.println(String.format("Available components: %s", COMPONENTS.keySet()));
-    System.out.println(String.format("Energy counter wrap around : %d", WRAP_AROUND));
+    System.out.println(String.format("Energy counter wrap around: %f", WRAP_AROUND));
     if (WRAP_AROUND != DRAM_WRAP_AROUND) {
-      System.out.println(String.format("DRAM counter wrap around : %d", DRAM_WRAP_AROUND));
+      System.out.println(String.format("DRAM counter wrap around: %f", DRAM_WRAP_AROUND));
     }
 
     JraplUtils.poll(args, Rapl::sample, Rapl::difference);
