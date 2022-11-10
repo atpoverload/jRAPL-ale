@@ -28,7 +28,7 @@ public final class Rapl {
 
     // pull out energy values
     for (int socket = 0; socket < MicroArchitecture.SOCKET_COUNT; socket++) {
-      EnergyReading.Builder reading = EnergyReading.newBuilder().setSocket(socket);
+      EnergyReading.Builder reading = EnergyReading.newBuilder().setSocket(socket + 1);
       for (String component : COMPONENTS.keySet()) {
         double energy =
             Double.parseDouble(entries[COMPONENTS.size() * socket + COMPONENTS.get(component)]);
@@ -66,7 +66,7 @@ public final class Rapl {
             .setEnd(second.getTimestamp());
     // TODO: this assumes the order is good. we should be checking the sockets match up
     for (int socket = 0; socket < first.getReadingCount(); socket++) {
-      EnergyReading.Builder reading = EnergyReading.newBuilder();
+      EnergyReading.Builder reading = EnergyReading.newBuilder().setSocket(socket + 1);
       reading.setPackage(
           differenceWithWraparound(
               first.getReading(socket).getPackage(), second.getReading(socket).getPackage()));

@@ -26,7 +26,7 @@ public final class Powercap {
 
     // pull out energy values
     for (int socket = 0; socket < SOCKET_COUNT; socket++) {
-      EnergyReading.Builder reading = EnergyReading.newBuilder().setSocket(socket);
+      EnergyReading.Builder reading = EnergyReading.newBuilder().setSocket(socket + 1);
       reading.setPackage(readPackage(socket));
       reading.setDram(readDram(socket));
       sample.addReading(reading);
@@ -48,7 +48,7 @@ public final class Powercap {
             .setEnd(second.getTimestamp());
     // TODO: this assumes the order is good. we should be checking the sockets match up
     for (int socket = 0; socket < first.getReadingCount(); socket++) {
-      EnergyReading.Builder reading = EnergyReading.newBuilder();
+      EnergyReading.Builder reading = EnergyReading.newBuilder().setSocket(socket + 1);
       reading.setPackage(
           second.getReading(socket).getPackage() - first.getReading(socket).getPackage());
       reading.setDram(second.getReading(socket).getDram() - first.getReading(socket).getDram());
