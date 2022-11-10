@@ -52,6 +52,7 @@ public final class Powercap {
       reading.setPackage(
           second.getReading(socket).getPackage() - first.getReading(socket).getPackage());
       reading.setDram(second.getReading(socket).getDram() - first.getReading(socket).getDram());
+      diff.addReading(diff);
     }
 
     return diff.build();
@@ -100,6 +101,6 @@ public final class Powercap {
 
     System.out.println(String.format("Socket count: %d", SOCKET_COUNT));
 
-    JraplUtils.poll(args, Rapl::sample, Rapl::difference);
+    JraplUtils.poll(args, Powercap::sample, Powercap::difference);
   }
 }

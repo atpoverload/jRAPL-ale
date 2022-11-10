@@ -79,6 +79,7 @@ public final class Rapl {
       reading.setGpu(
           differenceWithWraparound(
               first.getReading(socket).getGpu(), second.getReading(socket).getGpu()));
+      diff.addReading(diff);
     }
 
     return diff.build();
