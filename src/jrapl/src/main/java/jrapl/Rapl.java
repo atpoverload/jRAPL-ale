@@ -138,7 +138,7 @@ public final class Rapl {
 
   public static void main(String[] args) throws Exception {
     System.out.println("RAPL initialized");
-    System.out.println(String.format("Micro architecture: %d", MicroArchitecture.NAME));
+    System.out.println(String.format("Micro architecture: %s", MicroArchitecture.NAME));
     System.out.println(String.format("Socket count: %d", MicroArchitecture.SOCKET_COUNT));
 
     if (COMPONENTS.isEmpty()) {
