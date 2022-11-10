@@ -9,14 +9,13 @@ import jrapl.EnergyProtos.EnergySampleDifference;
 
 /** Simple wrapper around rapl access. */
 public final class Rapl {
-  private static final double WRAP_AROUND = wrapAround();
-  private static final double DRAM_WRAP_AROUND = dramWrapAround();
-
-  private static final HashMap<String, Integer> COMPONENTS = getComponents();
-
   // TODO: the delimiter is currently hacked-in to be ;. this was done because of the formatting
   // issue associated with , vs . on certain locales
   private static final String ENERGY_STRING_DELIMITER = ";";
+  private static final HashMap<String, Integer> COMPONENTS;
+
+  private static final double WRAP_AROUND;
+  private static final double DRAM_WRAP_AROUND;
 
   /** Returns an {@link EnergySample} populated by parsing the string returned by {@ readNative}. */
   public static EnergySample sample() {
@@ -129,13 +128,17 @@ public final class Rapl {
 
   static {
     NativeLibrary.initialize();
+
+    WRAP_AROUND = wrapAround();
+    DRAM_WRAP_AROUND = dramWrapAround();
+    COMPONENTS = getComponents();
   }
 
   private Rapl() {}
 
   public static void main(String[] args) throws Exception {
     System.out.println("RAPL initialized");
-
+    System.out.println(String.format("Micro architecture: %d", MicroArchitecture.NAME));
     System.out.println(String.format("Socket count: %d", MicroArchitecture.SOCKET_COUNT));
 
     if (COMPONENTS.isEmpty()) {

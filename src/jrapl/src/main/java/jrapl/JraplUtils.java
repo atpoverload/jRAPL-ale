@@ -14,7 +14,7 @@ final class JraplUtils {
       throws Exception {
     if (args.length == 0) {
       return;
-    } else if (args.length > 2) {
+    } else if (args.length > 2 || args[0] != "--poll") {
       System.out.println(
           String.format(
               "wrong arguments for polling: expected --poll <ms>; got %s", Arrays.toString(args)));
