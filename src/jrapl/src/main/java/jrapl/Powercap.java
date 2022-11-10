@@ -13,10 +13,11 @@ import jrapl.EnergyProtos.EnergySampleDifference;
 
 /** Simple wrapper to read powercap's energy. */
 public final class Powercap {
-  public static final int SOCKET_COUNT;
-
   private static final String POWERCAP_PATH =
       String.join("/", "/sys", "devices", "virtual", "powercap", "intel-rapl");
+
+  public static final int SOCKET_COUNT =
+      (int) Stream.of(new File(POWERCAP_PATH).list()).filter(f -> f.contains("intel-rapl")).count();
 
   /** Returns an {@link EnergySample} populated by parsing the string returned by {@ readNative}. */
   public static EnergySample sample() {
@@ -92,23 +93,13 @@ public final class Powercap {
     }
   }
 
-  static {
-    SOCKET_COUNT =
-        (int)
-            Stream.of(new File(POWERCAP_PATH).list()).filter(f -> f.contains("intel-rapl")).count();
-  }
+  private Powercap() {}
 
   public static void main(String[] args) throws Exception {
     System.out.println("powercap initialized");
 
     System.out.println(String.format("Socket count: %d", SOCKET_COUNT));
 
-    EnergySample lastSample = sample();
-    while (true) {
-      Thread.sleep(1000);
-      EnergySample sample = sample();
-      System.out.println(difference(lastSample, sample));
-      lastSample = sample;
-    }
+    JraplUtils.poll(args, Rapl::sample, Rapl::difference);
   }
 }

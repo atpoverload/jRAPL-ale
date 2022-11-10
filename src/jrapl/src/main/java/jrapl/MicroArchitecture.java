@@ -2,8 +2,8 @@ package jrapl;
 
 /** Simple wrapper around rapl access. */
 public final class MicroArchitecture {
-  public static final String NAME;
-  public static final int SOCKET_COUNT;
+  public static final String NAME = name();
+  public static final int SOCKET_COUNT = sockets();
 
   /** Returns the name of the micro-architecture. */
   private static native String name();
@@ -13,8 +13,7 @@ public final class MicroArchitecture {
 
   static {
     NativeLibrary.initialize();
-
-    NAME = name();
-    SOCKET_COUNT = sockets();
   }
+
+  private MicroArchitecture() {}
 }

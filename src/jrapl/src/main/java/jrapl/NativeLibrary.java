@@ -1,9 +1,13 @@
 package jrapl;
 
-/** Simple wrapper around the native backend management. */
+/**
+ * Simple wrapper around the native backend management. You should never need to access this; the
+ * other classes that require the library should handle accessing the class for you.
+ */
 final class NativeLibrary {
   private static boolean IS_INITIALIZED = false;
 
+  /** Synchronized helper for {@code initializeNative}. */
   static void initialize() {
     synchronized (NativeLibrary.class) {
       if (!IS_INITIALIZED) {
@@ -13,11 +17,12 @@ final class NativeLibrary {
     }
   }
 
+  /** Synchronized helper for {@code deallocateNative}. */
   static void deallocate() {
     synchronized (NativeLibrary.class) {
       if (IS_INITIALIZED) {
         IS_INITIALIZED = false;
-        initializeNative();
+        deallocateNative();
       }
     }
   }
@@ -31,4 +36,6 @@ final class NativeLibrary {
   static {
     System.loadLibrary("jrapl");
   }
+
+  private NativeLibrary() {}
 }

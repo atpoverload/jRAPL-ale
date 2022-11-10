@@ -12,7 +12,8 @@ public final class Rapl {
   private static final double WRAP_AROUND = wrapAround();
   private static final double DRAM_WRAP_AROUND = dramWrapAround();
 
-  private static final HashMap<String, Integer> COMPONENTS = new HashMap<>();
+  private static final HashMap<String, Integer> COMPONENTS = getComponents();
+
   // TODO: the delimiter is currently hacked-in to be ;. this was done because of the formatting
   // issue associated with , vs . on certain locales
   private static final String ENERGY_STRING_DELIMITER = ";";
@@ -99,6 +100,16 @@ public final class Rapl {
     return energy;
   }
 
+  private static HashMap<String, Integer> getComponents() {
+    HashMap<String, Integer> components = new HashMap<>();
+    // TODO -- there's a 5th possible power domain, right? like full motherboard energy or something
+    int index = 0;
+    for (String component : components().split(",")) {
+      components.put(component, index++);
+    }
+    return components;
+  }
+
   /**
    * Returns the energy of each component and the current timestamp as a delimited string. The
    * energy values are floating point numbers representing the number of joules since the last boot.
@@ -117,13 +128,9 @@ public final class Rapl {
 
   static {
     NativeLibrary.initialize();
-
-    // TODO -- there's a 5th possible power domain, right? like full motherboard energy or something
-    int index = 0;
-    for (String component : components().split(",")) {
-      COMPONENTS.put(component, index++);
-    }
   }
+
+  private Rapl() {}
 
   public static void main(String[] args) throws Exception {
     System.out.println("RAPL initialized");
@@ -140,12 +147,6 @@ public final class Rapl {
       System.out.println(String.format("DRAM counter wrap around : %d", DRAM_WRAP_AROUND));
     }
 
-    EnergySample lastSample = sample();
-    while (true) {
-      Thread.sleep(1000);
-      EnergySample sample = sample();
-      System.out.println(difference(lastSample, sample));
-      lastSample = sample;
-    }
+    JraplUtils.poll(args, Rapl::sample, Rapl::difference);
   }
 }
