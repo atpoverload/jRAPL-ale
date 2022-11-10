@@ -52,7 +52,7 @@ public final class Powercap {
       reading.setPackage(
           second.getReading(socket).getPackage() - first.getReading(socket).getPackage());
       reading.setDram(second.getReading(socket).getDram() - first.getReading(socket).getDram());
-      diff.addReading(diff);
+      diff.addReading(reading);
     }
 
     return diff.build();
