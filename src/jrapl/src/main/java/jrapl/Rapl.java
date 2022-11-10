@@ -1,44 +1,99 @@
 package jrapl;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
+import static com.google.protobuf.util.Timestamps.fromMicros;
+
+import java.util.HashMap;
+import jrapl.EnergyProtos.EnergyReading;
+import jrapl.EnergyProtos.EnergySample;
+import jrapl.EnergyProtos.EnergySampleDifference;
 
 /** Simple wrapper around rapl access. */
 public final class Rapl {
   public static final int SOCKET_COUNT;
 
-  private static final int COMPONENT_COUNT;
-  private static final int[] COMPONENT_INDICES;
+  private static final double WRAP_AROUND = 0;
+  private static final double DRAM_WRAP_AROUND = 0;
+
+  private static final HashMap<String, Integer> COMPONENTS = new HashMap<>();
   // TODO: the delimiter is currently hacked-in to be ;. this was done because of the formatting
   // issue associated with , vs . on certain locales
   private static final String ENERGY_STRING_DELIMITER = ";";
 
   /** Returns an {@link EnergySample} populated by parsing the string returned by {@ readNative}. */
-  static EnergySample sample() {
-    double[][] energy = new double[SOCKET_COUNT][EnergySample.Component.values().length];
+  public static EnergySample sample() {
     String[] entries = readNative().split(ENERGY_STRING_DELIMITER);
+
+    EnergySample.Builder sample =
+        EnergySample.newBuilder()
+            .setTimestamp(fromMicros(Long.parseLong(entries[entries.length - 1])));
 
     // pull out energy values
     for (int socket = 0; socket < SOCKET_COUNT; socket++) {
-      for (EnergySample.Component component : EnergySample.Component.values()) {
-        int index = COMPONENT_INDICES[component.ordinal()];
-        if (index >= 0) {
-          int componentIndex = COMPONENT_COUNT * socket + index;
-          energy[socket][component.ordinal()] =
-              // TODO: replace() is a fix for localization issues (add the issue)
-              Double.parseDouble(entries[componentIndex].replace(",", "."));
+      EnergyReading.Builder reading = EnergyReading.newBuilder().setSocket(socket);
+      for (String component : COMPONENTS.keySet()) {
+        double energy =
+            Double.parseDouble(entries[COMPONENTS.size() * socket + COMPONENTS.get(component)]);
+        switch (component) {
+          case "pkg":
+            reading.setPackage(energy);
+            break;
+          case "dram":
+            reading.setDram(energy);
+            break;
+          case "core":
+            reading.setCore(energy);
+            break;
+          case "gpu":
+            reading.setGpu(energy);
+            break;
         }
       }
+      sample.addReading(reading);
     }
 
-    // parse the timestamp
-    long ts = Long.parseLong(entries[entries.length - 1]);
-    long seconds = TimeUnit.MICROSECONDS.toSeconds(ts);
-    long nanos = TimeUnit.MICROSECONDS.toNanos(ts) - TimeUnit.SECONDS.toNanos(seconds);
-    Instant timestamp = Instant.ofEpochSecond(seconds, nanos);
+    return sample.build();
+  }
 
-    return new EnergySample(timestamp, energy);
+  private static double differenceWithWraparound(double first, double second) {
+    double energy = second - first;
+    if (energy < 0) {
+      energy += WRAP_AROUND;
+    }
+    return energy;
+  }
+
+  private static double differenceWithDramWraparound(double first, double second) {
+    double energy = second - first;
+    if (energy < 0) {
+      energy += DRAM_WRAP_AROUND;
+    }
+    return energy;
+  }
+
+  public static EnergySampleDifference difference(EnergySample first, EnergySample second) {
+    // TODO: this assumes the order is good. we should be checking the timestamps
+    EnergySampleDifference.Builder diff =
+        EnergySampleDifference.newBuilder()
+            .setStart(first.getTimestamp())
+            .setEnd(second.getTimestamp());
+    // TODO: this assumes the order is good. we should be checking the sockets match up
+    for (int socket = 0; socket < first.getReadingCount(); socket++) {
+      EnergyReading.Builder reading = EnergyReading.newBuilder();
+      reading.setPackage(
+          differenceWithWraparound(
+              first.getReading(socket).getPackage(), second.getReading(socket).getPackage()));
+      reading.setDram(
+          differenceWithDramWraparound(
+              first.getReading(socket).getDram(), second.getReading(socket).getDram()));
+      reading.setCore(
+          differenceWithWraparound(
+              first.getReading(socket).getCore(), second.getReading(socket).getCore()));
+      reading.setGpu(
+          differenceWithWraparound(
+              first.getReading(socket).getGpu(), second.getReading(socket).getGpu()));
+    }
+
+    return diff.build();
   }
 
   /**
@@ -62,27 +117,10 @@ public final class Rapl {
     SOCKET_COUNT = sockets();
 
     // TODO -- there's a 5th possible power domain, right? like full motherboard energy or something
-    COMPONENT_INDICES = new int[] {-1, -1, -1, -1};
     int index = 0;
     for (String component : components().split(",")) {
-      switch (component) {
-        case "dram":
-          COMPONENT_INDICES[EnergySample.Component.DRAM.ordinal()] = index++;
-          break;
-        case "gpu":
-          COMPONENT_INDICES[EnergySample.Component.GPU.ordinal()] = index++;
-          break;
-        case "core":
-          COMPONENT_INDICES[EnergySample.Component.CORE.ordinal()] = index++;
-          break;
-        case "pkg":
-          COMPONENT_INDICES[EnergySample.Component.PACKAGE.ordinal()] = index++;
-          break;
-        default:
-          continue;
-      }
+      COMPONENTS.put(component, index++);
     }
-    COMPONENT_COUNT = index;
   }
 
   public static void main(String[] args) throws Exception {
@@ -90,24 +128,18 @@ public final class Rapl {
 
     System.out.println(String.format("Socket count: %d", SOCKET_COUNT));
 
-    ArrayList<EnergySample.Component> components = new ArrayList<>();
-    for (EnergySample.Component component : EnergySample.Component.values()) {
-      if (COMPONENT_INDICES[component.ordinal()] > -1) {
-        components.add(component);
-      }
-    }
-    if (components.isEmpty()) {
+    if (COMPONENTS.isEmpty()) {
       System.out.println("No components found!");
       return;
     }
-    System.out.println(String.format("Available components: %s", components));
+    System.out.println(String.format("Available components: %s", COMPONENTS.keySet()));
 
-    EnergySample lastSample;
+    EnergySample lastSample = sample();
     while (true) {
-      EnergySample sample = sample();
-      System.out.println(sample.toJson());
-      lastSample = sample;
       Thread.sleep(1000);
+      EnergySample sample = sample();
+      System.out.println(difference(lastSample, sample));
+      lastSample = sample;
     }
   }
 }

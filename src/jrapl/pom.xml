@@ -11,11 +11,53 @@
 
   <name>jrapl</name>
 
+  <properties>
+    <protobuf.version>3.21.9</protobuf.version>
+  </properties>
+
+  <dependencies>
+    <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
+    <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java</artifactId>
+        <version>${protobuf.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java-util</artifactId>
+        <version>${protobuf.version}</version>
+    </dependency>
+  </dependencies>
+
   <build>
     <plugins>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
         <version>3.0.2</version>
+      </plugin>
+      <plugin>
+        <groupId>com.github.os72</groupId>
+        <artifactId>protoc-jar-maven-plugin</artifactId>
+        <version>3.11.4</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <protocVersion>3.6.0</protocVersion>
+              <addSources>main</addSources>
+              <includeMavenTypes>direct</includeMavenTypes>
+              <includeDirectories>
+                <include>src/main/protobuf</include>
+              </includeDirectories>
+              <inputDirectories>
+                <include>src/main/protobuf</include>
+              </inputDirectories>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>

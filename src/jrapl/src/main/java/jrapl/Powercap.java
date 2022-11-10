@@ -1,10 +1,15 @@
 package jrapl;
 
+import static com.google.protobuf.util.Timestamps.fromMillis;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.time.Instant;
 import java.util.stream.Stream;
+import jrapl.EnergyProtos.EnergyReading;
+import jrapl.EnergyProtos.EnergySample;
+import jrapl.EnergyProtos.EnergySampleDifference;
 
 /** Simple wrapper to read powercap's energy. */
 public final class Powercap {
@@ -15,14 +20,35 @@ public final class Powercap {
 
   /** Returns an {@link EnergySample} populated by parsing the string returned by {@ readNative}. */
   public static EnergySample sample() {
-    double[][] energy = new double[SOCKET_COUNT][EnergySample.Component.values().length];
+    EnergySample.Builder sample =
+        EnergySample.newBuilder().setTimestamp(fromMillis(Instant.now().toEpochMilli()));
 
+    // pull out energy values
     for (int socket = 0; socket < SOCKET_COUNT; socket++) {
-      energy[socket][EnergySample.Component.PACKAGE.ordinal()] = readPackage(socket);
-      energy[socket][EnergySample.Component.DRAM.ordinal()] = readDram(socket);
+      EnergyReading.Builder reading = EnergyReading.newBuilder().setSocket(socket);
+      reading.setPackage(readPackage(socket));
+      reading.setDram(readDram(socket));
+      sample.addReading(reading);
     }
 
-    return new EnergySample(Instant.now(), energy);
+    return sample.build();
+  }
+
+  public static EnergySampleDifference difference(EnergySample first, EnergySample second) {
+    // TODO: this assumes the order is good. we should be checking the timestamps
+    EnergySampleDifference.Builder diff =
+        EnergySampleDifference.newBuilder()
+            .setStart(first.getTimestamp())
+            .setEnd(second.getTimestamp());
+    // TODO: this assumes the order is good. we should be checking the sockets match up
+    for (int socket = 0; socket < first.getReadingCount(); socket++) {
+      EnergyReading.Builder reading = EnergyReading.newBuilder();
+      reading.setPackage(
+          second.getReading(socket).getPackage() - first.getReading(socket).getPackage());
+      reading.setDram(second.getReading(socket).getDram() - first.getReading(socket).getDram());
+    }
+
+    return diff.build();
   }
 
   /**
@@ -41,7 +67,8 @@ public final class Powercap {
 
   /**
    * Parses the contents of
-   * /sys/devices/virtual/powercap/intel-rapl/intel-rapl:<socket>/intel-rapl:<socket>:0/energy_uj,
+   *
+   * <p>/sys/devices/virtual/powercap/intel-rapl/intel-rapl:<socket>/intel-rapl:<socket>:0/energy_uj,
    * which contains the number of microjoules consumed by the dram since boot as an integer.
    */
   private static double readDram(int socket) {
@@ -71,12 +98,12 @@ public final class Powercap {
 
     System.out.println(String.format("Socket count: %d", SOCKET_COUNT));
 
-    EnergySample lastSample;
+    EnergySample lastSample = sample();
     while (true) {
-      EnergySample sample = sample();
-      System.out.println(sample.toJson());
-      lastSample = sample;
       Thread.sleep(1000);
+      EnergySample sample = sample();
+      System.out.println(difference(lastSample, sample));
+      lastSample = sample;
     }
   }
 }
