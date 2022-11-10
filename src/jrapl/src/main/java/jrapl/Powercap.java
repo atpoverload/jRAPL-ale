@@ -34,6 +34,11 @@ public final class Powercap {
     return sample.build();
   }
 
+  /**
+   * Computes the forward differences of two {@link EnergySamples}, assuming that they are correctly
+   * ordered and have matching sockets. Although this API guarantees that, samples from other
+   * sources may misbehave when using this.
+   */
   public static EnergySampleDifference difference(EnergySample first, EnergySample second) {
     // TODO: this assumes the order is good. we should be checking the timestamps
     EnergySampleDifference.Builder diff =

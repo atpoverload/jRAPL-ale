@@ -23,8 +23,24 @@ Java_jrapl_Rapl_readNative(JNIEnv *env, jclass jcls) {
 }
 
 JNIEXPORT jint JNICALL
-Java_jrapl_Rapl_sockets(JNIEnv * env, jclass jcls) {
-  return getSocketNum();
+Java_jrapl_Rapl_wrapAround(JNIEnv * env, jclass jcls) {
+  int fd = open("/dev/cpu/0/msr",O_RDONLY);
+  double wraparound_energy = get_wraparound_energy(get_rapl_unit(fd).energy);
+  close(fd);
+  return wraparound_energy;
+}
+
+JNIEXPORT jint JNICALL
+Java_jrapl_Rapl_dramWrapAround(JNIEnv * env, jclass jcls) {
+  int fd = open("/dev/cpu/0/msr",O_RDONLY);
+  int microarch = get_micro_architecture();
+  double wraparound_energy = get_wraparound_energy (
+    (microarch == BROADWELL || microarch == BROADWELL2)
+      ? BROADWELL_MSR_DRAM_ENERGY_UNIT
+      : get_rapl_unit(fd).energy
+  );
+  close(fd);
+  return wraparound_energy;
 }
 
 JNIEXPORT jstring JNICALL
