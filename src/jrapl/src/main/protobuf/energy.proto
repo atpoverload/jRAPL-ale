@@ -17,7 +17,6 @@ message EnergyReading {
 
 // absolute energy consumption since boot
 message EnergySample {
-  // unix time in microseconds
   google.protobuf.Timestamp timestamp = 1;
   repeated EnergyReading reading = 2;
 }

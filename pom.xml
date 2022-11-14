@@ -19,8 +19,8 @@
   </properties>
 
   <modules>
-    <module>src/jrapl</module>
     <module>src/native</module>
+    <module>src/jrapl</module>
   </modules>
 
   <!-- <dependencies>
