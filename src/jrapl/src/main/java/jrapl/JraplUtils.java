@@ -3,14 +3,12 @@ package jrapl;
 import java.util.Arrays;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
-import jrapl.EnergyProtos.EnergySample;
-import jrapl.EnergyProtos.EnergySampleDifference;
 
 final class JraplUtils {
   static void poll(
       String[] args,
-      Supplier<EnergySample> sample,
-      BiFunction<EnergySample, EnergySample, EnergySampleDifference> difference)
+      Supplier<RaplSample> sample,
+      BiFunction<RaplSample, RaplSample, RaplDifference> difference)
       throws Exception {
     if (args.length == 0) {
       return;
@@ -26,10 +24,10 @@ final class JraplUtils {
       pollingTime = Long.parseLong(args[1]);
     }
 
-    EnergySample lastSample = sample.get();
+    RaplSample lastSample = sample.get();
     while (true) {
       Thread.sleep(pollingTime);
-      EnergySample nextSample = sample.get();
+      RaplSample nextSample = sample.get();
       System.out.println(difference.apply(lastSample, nextSample));
       lastSample = nextSample;
     }

@@ -7,9 +7,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.time.Instant;
 import java.util.stream.Stream;
-import jrapl.EnergyProtos.EnergyReading;
-import jrapl.EnergyProtos.EnergySample;
-import jrapl.EnergyProtos.EnergySampleDifference;
 
 /** Simple wrapper to read powercap's energy. */
 public final class Powercap {
@@ -19,14 +16,14 @@ public final class Powercap {
   public static final int SOCKET_COUNT =
       (int) Stream.of(new File(POWERCAP_PATH).list()).filter(f -> f.contains("intel-rapl")).count();
 
-  /** Returns an {@link EnergySample} populated by parsing the string returned by {@ readNative}. */
-  public static EnergySample sample() {
-    EnergySample.Builder sample =
-        EnergySample.newBuilder().setTimestamp(fromMillis(Instant.now().toEpochMilli()));
+  /** Returns an {@link RaplSample} populated by parsing the string returned by {@ readNative}. */
+  public static RaplSample sample() {
+    RaplSample.Builder sample =
+        RaplSample.newBuilder().setTimestamp(fromMillis(Instant.now().toEpochMilli()));
 
     // pull out energy values
     for (int socket = 0; socket < SOCKET_COUNT; socket++) {
-      EnergyReading.Builder reading = EnergyReading.newBuilder().setSocket(socket + 1);
+      RaplReading.Builder reading = RaplReading.newBuilder().setSocket(socket + 1);
       reading.setPackage(readPackage(socket));
       reading.setDram(readDram(socket));
       sample.addReading(reading);
@@ -36,23 +33,22 @@ public final class Powercap {
   }
 
   /**
-   * Computes the forward differences of two {@link EnergySamples}, assuming that they are correctly
+   * Computes the forward differences of two {@link RaplSamples}, assuming that they are correctly
    * ordered and have matching sockets. Although this API guarantees that, samples from other
    * sources may misbehave when using this.
    */
-  public static EnergySampleDifference difference(EnergySample first, EnergySample second) {
+  public static RaplDifference difference(RaplSample first, RaplSample second) {
     // TODO: this assumes the order is good. we should be checking the timestamps
-    EnergySampleDifference.Builder diff =
-        EnergySampleDifference.newBuilder()
-            .setStart(first.getTimestamp())
-            .setEnd(second.getTimestamp());
+    RaplDifference.Builder diff =
+        RaplDifference.newBuilder().setStart(first.getTimestamp()).setEnd(second.getTimestamp());
     // TODO: this assumes the order is good. we should be checking the sockets match up
     for (int socket = 0; socket < first.getReadingCount(); socket++) {
-      EnergyReading.Builder reading = EnergyReading.newBuilder().setSocket(socket + 1);
-      reading.setPackage(
-          second.getReading(socket).getPackage() - first.getReading(socket).getPackage());
-      reading.setDram(second.getReading(socket).getDram() - first.getReading(socket).getDram());
-      diff.addReading(reading);
+      diff.addReading(
+          RaplReading.newBuilder()
+              .setSocket(socket + 1)
+              .setPackage(
+                  second.getReading(socket).getPackage() - first.getReading(socket).getPackage())
+              .setDram(second.getReading(socket).getDram() - first.getReading(socket).getDram()));
     }
 
     return diff.build();

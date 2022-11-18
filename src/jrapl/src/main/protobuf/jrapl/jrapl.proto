@@ -2,11 +2,12 @@ syntax = "proto3";
 
 package jrapl;
 
+option java_multiple_files = true;
+option java_package = "jrapl";
+
 import "google/protobuf/timestamp.proto";
 
-option java_outer_classname = "EnergyProtos";
-
-message EnergyReading {
+message RaplReading {
   uint32 socket = 1;
   // energy value in joules
   double package = 2;
@@ -16,14 +17,14 @@ message EnergyReading {
 }
 
 // absolute energy consumption since boot
-message EnergySample {
+message RaplSample {
   google.protobuf.Timestamp timestamp = 1;
-  repeated EnergyReading reading = 2;
+  repeated RaplReading reading = 2;
 }
 
-// relative energy consumption between readings in an energy sample
-message EnergySampleDifference {
+// relative energy consumption between readings of two energy samples
+message RaplDifference {
   google.protobuf.Timestamp start = 1;
   google.protobuf.Timestamp end = 2;
-  repeated EnergyReading reading = 3;
+  repeated RaplReading reading = 3;
 }

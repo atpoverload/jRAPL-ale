@@ -3,9 +3,6 @@ package jrapl;
 import static com.google.protobuf.util.Timestamps.fromMicros;
 
 import java.util.HashMap;
-import jrapl.EnergyProtos.EnergyReading;
-import jrapl.EnergyProtos.EnergySample;
-import jrapl.EnergyProtos.EnergySampleDifference;
 
 /** Simple wrapper around rapl access. */
 public final class Rapl {
@@ -17,17 +14,17 @@ public final class Rapl {
   private static final double WRAP_AROUND;
   private static final double DRAM_WRAP_AROUND;
 
-  /** Returns an {@link EnergySample} populated by parsing the string returned by {@ readNative}. */
-  public static EnergySample sample() {
+  /** Returns an {@link RaplSample} populated by parsing the string returned by {@ readNative}. */
+  public static RaplSample sample() {
     String[] entries = readNative().split(ENERGY_STRING_DELIMITER);
 
-    EnergySample.Builder sample =
-        EnergySample.newBuilder()
+    RaplSample.Builder sample =
+        RaplSample.newBuilder()
             .setTimestamp(fromMicros(Long.parseLong(entries[entries.length - 1])));
 
     // pull out energy values
     for (int socket = 0; socket < MicroArchitecture.SOCKET_COUNT; socket++) {
-      EnergyReading.Builder reading = EnergyReading.newBuilder().setSocket(socket + 1);
+      RaplReading.Builder reading = RaplReading.newBuilder().setSocket(socket + 1);
       for (String component : COMPONENTS.keySet()) {
         double energy =
             Double.parseDouble(entries[COMPONENTS.size() * socket + COMPONENTS.get(component)]);
@@ -53,38 +50,38 @@ public final class Rapl {
   }
 
   /**
-   * Computes the forward differences of two {@link EnergySamples}, assuming that they are correctly
+   * Computes the forward differences of two {@link RaplSamples}, assuming that they are correctly
    * ordered and have matching sockets. Although this API guarantees that, samples from other
    * sources may misbehave when using this.
    */
-  public static EnergySampleDifference difference(EnergySample first, EnergySample second) {
+  public static RaplDifference difference(RaplSample first, RaplSample second) {
     // TODO: this assumes the order is good. we should be checking the timestamps
-    EnergySampleDifference.Builder diff =
-        EnergySampleDifference.newBuilder()
-            .setStart(first.getTimestamp())
-            .setEnd(second.getTimestamp());
+    RaplDifference.Builder diff =
+        RaplDifference.newBuilder().setStart(first.getTimestamp()).setEnd(second.getTimestamp());
     // TODO: this assumes the order is good. we should be checking the sockets match up
     for (int socket = 0; socket < first.getReadingCount(); socket++) {
-      EnergyReading.Builder reading = EnergyReading.newBuilder().setSocket(socket + 1);
-      reading.setPackage(
-          differenceWithWraparound(
-              first.getReading(socket).getPackage(), second.getReading(socket).getPackage()));
-      reading.setDram(
-          differenceWithDramWraparound(
-              first.getReading(socket).getDram(), second.getReading(socket).getDram()));
-      reading.setCore(
-          differenceWithWraparound(
-              first.getReading(socket).getCore(), second.getReading(socket).getCore()));
-      reading.setGpu(
-          differenceWithWraparound(
-              first.getReading(socket).getGpu(), second.getReading(socket).getGpu()));
-      diff.addReading(reading);
+      diff.addReading(
+          RaplReading.newBuilder()
+              .setSocket(socket + 1)
+              .setPackage(
+                  diffWithWraparound(
+                      first.getReading(socket).getPackage(),
+                      second.getReading(socket).getPackage()))
+              .setDram(
+                  diffWithDramWraparound(
+                      first.getReading(socket).getDram(), second.getReading(socket).getDram()))
+              .setCore(
+                  diffWithWraparound(
+                      first.getReading(socket).getCore(), second.getReading(socket).getCore()))
+              .setGpu(
+                  diffWithWraparound(
+                      first.getReading(socket).getGpu(), second.getReading(socket).getGpu())));
     }
 
     return diff.build();
   }
 
-  private static double differenceWithWraparound(double first, double second) {
+  private static double diffWithWraparound(double first, double second) {
     double energy = second - first;
     if (energy < 0) {
       energy += WRAP_AROUND;
@@ -92,7 +89,7 @@ public final class Rapl {
     return energy;
   }
 
-  private static double differenceWithDramWraparound(double first, double second) {
+  private static double diffWithDramWraparound(double first, double second) {
     double energy = second - first;
     if (energy < 0) {
       energy += DRAM_WRAP_AROUND;
