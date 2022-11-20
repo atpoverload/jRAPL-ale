@@ -13,8 +13,7 @@ public final class Powercap {
   private static final String POWERCAP_PATH =
       String.join("/", "/sys", "devices", "virtual", "powercap", "intel-rapl");
 
-  public static final int SOCKET_COUNT =
-      (int) Stream.of(new File(POWERCAP_PATH).list()).filter(f -> f.contains("intel-rapl")).count();
+  public static final int SOCKET_COUNT = getSocketCount();
 
   /** Returns an {@link RaplSample} populated by parsing the string returned by {@ readNative}. */
   public static RaplSample sample() {
@@ -52,6 +51,16 @@ public final class Powercap {
     }
 
     return diff.build();
+  }
+
+  private static int getSocketCount() {
+    try {
+      return (int)
+          Stream.of(new File(POWERCAP_PATH).list()).filter(f -> f.contains("intel-rapl")).count();
+    } catch (Exception e) {
+      System.out.println("couldn't check the socket count; powercap likely not available");
+      return 0;
+    }
   }
 
   /**
