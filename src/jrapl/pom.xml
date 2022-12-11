@@ -15,6 +15,7 @@
   <packaging>jar</packaging>
 
   <properties>
+    <protoc.version>3.6.1</protoc.version>
     <protobuf.version>3.21.9</protobuf.version>
   </properties>
 
@@ -45,7 +46,7 @@
               <goal>run</goal>
             </goals>
             <configuration>
-              <protocVersion>3.6.0</protocVersion>
+              <protocVersion>${protoc.version}</protocVersion>
               <addSources>main</addSources>
               <includeMavenTypes>direct</includeMavenTypes>
               <includeDirectories>
@@ -59,13 +60,8 @@
         </executions>
       </plugin>
       <plugin>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.0.2</version>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.4.2</version>
         <configuration>
           <descriptorRefs>
               <descriptorRef>jar-with-dependencies</descriptorRef>
