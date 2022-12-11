@@ -2,6 +2,7 @@ package jrapl;
 
 /** Simple wrapper around rapl access. */
 public final class MicroArchitecture {
+  public static final String UNKNOWN = "UNKNOWN_MICRO_ARCHITECTURE";
   public static final String NAME;
   public static final int SOCKET_COUNT;
 
@@ -12,10 +13,13 @@ public final class MicroArchitecture {
   private static native int sockets();
 
   static {
-    NativeLibrary.initialize();
-
-    NAME = name();
-    SOCKET_COUNT = sockets();
+    if (NativeLibrary.initialize()) {
+      NAME = name();
+      SOCKET_COUNT = sockets();
+    } else {
+      NAME = UNKNOWN;
+      SOCKET_COUNT = 0;
+    }
   }
 
   private MicroArchitecture() {}

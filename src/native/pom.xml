@@ -4,10 +4,14 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <name>libjrapl</name>
-  <groupId>jRAPL</groupId>
+  <parent>
+      <groupId>jRAPL</groupId>
+      <artifactId>jRAPL</artifactId>
+      <version>${project.version}</version>
+      <relativePath>../../pom.xml</relativePath>
+  </parent>
   <artifactId>libjrapl</artifactId>
-  <version>1.0</version>
+  <name>libjrapl</name>
   <packaging>so</packaging>
 
   <build>
@@ -23,35 +27,35 @@
           <linkerExecutable>gcc</linkerExecutable>
           <sources>
             <source>
-              <directory>${basedir}/src/main/c</directory>
-              <fileNames>
-                <!-- implementation -->
-                <fileName>arch_spec.c</fileName>
-                <fileName>energy_check_utils.c</fileName>
-                <fileName>msr.c</fileName>
-                <fileName>utils.c</fileName>
-                <!-- jni interfaces -->
-                <fileName>micro_architecture.c</fileName>
-                <fileName>native_library.c</fileName>
-                <fileName>rapl.c</fileName>
-              </fileNames>
+                <directory>${basedir}/src/main/c</directory>
+                <fileNames>
+                    <!-- implementation -->
+                    <fileName>arch_spec.c</fileName>
+                    <fileName>energy_check_utils.c</fileName>
+                    <fileName>msr.c</fileName>
+                    <fileName>utils.c</fileName>
+                    <!-- jni interfaces -->
+                    <fileName>micro_architecture.c</fileName>
+                    <fileName>native_library.c</fileName>
+                    <fileName>rapl.c</fileName>
+                </fileNames>
             </source>
           </sources>
           <compilerStartOptions>
-            <compilerStartOption>-I ${JAVA_HOME}/include/</compilerStartOption>
-            <compilerStartOption>-I ${JAVA_HOME}/include/linux/</compilerStartOption>
+              <compilerStartOption>-I ${JAVA_HOME}/include/</compilerStartOption>
+              <compilerStartOption>-I ${JAVA_HOME}/include/linux/</compilerStartOption>
           </compilerStartOptions>
           <compilerEndOptions>
-            <compilerEndOption>-fPIC</compilerEndOption>
-            <compilerEndOption>-g</compilerEndOption>
+              <compilerEndOption>-fPIC</compilerEndOption>
+              <compilerEndOption>-g</compilerEndOption>
           </compilerEndOptions>
           <linkerStartOptions>
-            <linkerStartOption>-shared</linkerStartOption>
-            <linkerStartOption>-I ${JAVA_HOME}/include/</linkerStartOption>
-            <linkerStartOption>-I ${JAVA_HOME}/include/linux/</linkerStartOption>
+              <linkerStartOption>-shared</linkerStartOption>
+              <linkerStartOption>-I ${JAVA_HOME}/include/</linkerStartOption>
+              <linkerStartOption>-I ${JAVA_HOME}/include/linux/</linkerStartOption>
           </linkerStartOptions>
           <linkerEndOptions>
-            <linkerEndOption>-fPIC</linkerEndOption>
+              <linkerEndOption>-fPIC</linkerEndOption>
           </linkerEndOptions>
         </configuration>
       </plugin>

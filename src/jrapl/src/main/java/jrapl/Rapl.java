@@ -16,6 +16,11 @@ public final class Rapl {
 
   /** Returns an {@link RaplSample} populated by parsing the string returned by {@ readNative}. */
   public static RaplSample sample() {
+    if (COMPONENTS.isEmpty()) {
+      JraplUtils.LOGGER.info("no components founds; rapl likely not available");
+      return RaplSample.getDefaultInstance();
+    }
+
     String[] entries = readNative().split(ENERGY_STRING_DELIMITER);
 
     RaplSample.Builder sample =
@@ -124,11 +129,16 @@ public final class Rapl {
   private static native int dramWrapAround();
 
   static {
-    NativeLibrary.initialize();
-
-    WRAP_AROUND = wrapAround();
-    DRAM_WRAP_AROUND = dramWrapAround();
-    COMPONENTS = getComponents();
+    if (NativeLibrary.initialize()) {
+      WRAP_AROUND = wrapAround();
+      DRAM_WRAP_AROUND = dramWrapAround();
+      COMPONENTS = getComponents();
+    } else {
+      JraplUtils.LOGGER.info("native library couldn't be initialized; rapl likely not available");
+      WRAP_AROUND = 0;
+      DRAM_WRAP_AROUND = 0;
+      COMPONENTS = new HashMap<>();
+    }
   }
 
   private Rapl() {}

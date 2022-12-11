@@ -1,19 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>jRAPL</groupId>
   <artifactId>jRAPL</artifactId>
-  <version>1.0</version>
+  <version>${project.version}</version>
   <packaging>pom</packaging>
 
   <name>jRAPL</name>
   <url>http://www.github.com/aservet1/jRAPL</url>
 
   <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.version>1.0-SNAPSHOT</project.version>
     <maven.compiler.source>8</maven.compiler.source>
     <maven.compiler.target>8</maven.compiler.target>
   </properties>
@@ -23,109 +21,46 @@
     <module>src/jrapl</module>
   </modules>
 
-  <!-- <dependencies>
+  <dependencies>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13.1</version>
-      <scope>test</scope>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.11</version>
+        <scope>test</scope>
     </dependency>
-  </dependencies> -->
+  </dependencies>
 
-  <!-- <build> -->
-    <!-- <pluginManagement> -->
-      <!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
-      <!-- <plugins> -->
-        <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
-        <!-- <plugin>
-          <artifactId>maven-clean-plugin</artifactId>
-          <version>3.1.0</version>
-        </plugin> -->
-        <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
-        <!-- <plugin>
-          <artifactId>maven-resources-plugin</artifactId>
-          <version>3.0.2</version>
-        </plugin>
-        <plugin>
+  <build>
+    <plugins>
+      <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.0</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.22.1</version>
-        </plugin>
-        <plugin>
+          <configuration>
+              <source>1.8</source>
+              <target>1.8</target>
+          </configuration>
+      </plugin>
+      <plugin>
           <artifactId>maven-jar-plugin</artifactId>
           <version>3.0.2</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-install-plugin</artifactId>
-          <version>2.5.2</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>2.8.2</version>
-        </plugin> -->
-        <!-- site lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
-        <!-- <plugin>
-          <artifactId>maven-site-plugin</artifactId>
-          <version>3.7.1</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-project-info-reports-plugin</artifactId>
-          <version>3.0.0</version>
-        </plugin> -->
-        <!-- native code compilation -->
-        <!-- <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>native-maven-plugin</artifactId>
-          <version>1.0-alpha-8</version>
-          <extensions>true</extensions>
-          <configuration>
-            <compilerProvider>generic-classic</compilerProvider>
-            <compilerExecutable>g++</compilerExecutable>
-            <linkerExecutable>g++</linkerExecutable>
-            <sources>
-              <source>
-                <directory>${basedir}/src/main/c</directory>
-                <fileNames> -->
-                  <!-- implementation -->
-                  <!-- <fileName>arch_spec.c</fileName>
-                  <fileName>arch_spec.h</fileName>
-                  <fileName>energy_check_utils.c</fileName>
-                  <fileName>energy_check_utils.h</fileName>
-                  <fileName>micro_architectures.c</fileName>
-                  <fileName>msr.c</fileName>
-                  <fileName>msr.h</fileName>
-                  <fileName>utils.c</fileName>
-                  <fileName>utils.h</fileName> -->
-                  <!-- jni interfaces -->
-                  <!-- <fileName>native_library.c</fileName>
-                  <fileName>rapl.c</fileName>
-                </fileNames>
-              </source>
-            </sources>
-            <compilerStartOptions>
-              <compilerStartOption>-I ${JAVA_HOME}/include/</compilerStartOption>
-              <compilerStartOption>-I ${JAVA_HOME}/include/linux/</compilerStartOption>
-            </compilerStartOptions>
-            <compilerEndOptions>
-              <compilerEndOption>-fPIC</compilerEndOption>
-              <compilerEndOption>-std=gnu++11</compilerEndOption>
-            </compilerEndOptions>
-            <linkerStartOptions>
-              <linkerStartOption>-I ${JAVA_HOME}/include/</linkerStartOption>
-              <linkerStartOption>-I ${JAVA_HOME}/include/linux/</linkerStartOption>
-              <linkerStartOption>-I ${JAVA_HOME}/lib/</linkerStartOption>
-            </linkerStartOptions>
-            <linkerEndOptions>
-              <linkerEndOption>-shared</linkerEndOption>
-              <linkerEndOption>-fPIC</linkerEndOption>
-              <linkerEndOption>-lExample</linkerEndOption>
-            </linkerEndOptions>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build> -->
+      </plugin>
+      <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>3.4.2</version>
+      </plugin>
+      <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.0.0-M7</version>
+          <dependencies>
+            <dependency>
+                <groupId>org.apache.maven.surefire</groupId>
+                <artifactId>surefire-junit47</artifactId>
+                <version>3.0.0-M7</version>
+            </dependency>
+          </dependencies>
+      </plugin>
+    </plugins>
+  </build>
 </project>

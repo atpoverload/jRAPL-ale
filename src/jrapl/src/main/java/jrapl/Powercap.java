@@ -17,6 +17,10 @@ public final class Powercap {
 
   /** Returns an {@link RaplSample} populated by parsing the string returned by {@ readNative}. */
   public static RaplSample sample() {
+    if (SOCKET_COUNT == 0) {
+      JraplUtils.LOGGER.info("couldn't check the socket count; powercap likely not available");
+      return RaplSample.getDefaultInstance();
+    }
     RaplSample.Builder sample =
         RaplSample.newBuilder().setTimestamp(fromMillis(Instant.now().toEpochMilli()));
 
@@ -58,7 +62,7 @@ public final class Powercap {
       return (int)
           Stream.of(new File(POWERCAP_PATH).list()).filter(f -> f.contains("intel-rapl")).count();
     } catch (Exception e) {
-      System.out.println("couldn't check the socket count; powercap likely not available");
+      JraplUtils.LOGGER.info("couldn't check the socket count; powercap likely not available");
       return 0;
     }
   }
