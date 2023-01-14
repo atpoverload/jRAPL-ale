@@ -4,14 +4,13 @@
 
   <groupId>jRAPL</groupId>
   <artifactId>jRAPL</artifactId>
-  <version>${project.version}</version>
+  <version>1.0</version>
   <packaging>pom</packaging>
 
   <name>jRAPL</name>
   <url>http://www.github.com/aservet1/jRAPL</url>
 
   <properties>
-    <project.version>1.0-SNAPSHOT</project.version>
     <maven.compiler.source>8</maven.compiler.source>
     <maven.compiler.target>8</maven.compiler.target>
   </properties>

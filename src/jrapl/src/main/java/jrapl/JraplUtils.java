@@ -1,8 +1,10 @@
 package jrapl;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.logging.ConsoleHandler;
@@ -40,6 +42,19 @@ final class JraplUtils {
       System.out.println(difference.apply(lastSample, nextSample));
       lastSample = nextSample;
     }
+  }
+
+  /** Helper method that implements the left fold operation. */
+  static <T, R> List<R> foldLeft(Iterable<T> iterable, BiFunction<T, T, R> difference, T start) {
+    ArrayList<R> diffs = new ArrayList<>();
+    T previous = start;
+    for (T element : iterable) {
+      if (!previous.equals(start)) {
+        diffs.add(difference.apply(previous, element));
+      }
+      previous = element;
+    }
+    return diffs;
   }
 
   private static final SimpleDateFormat dateFormatter =

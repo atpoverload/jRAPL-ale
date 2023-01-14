@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.time.Instant;
+import java.util.List;
 import java.util.stream.Stream;
 
 /** Simple wrapper to read powercap's energy. */
@@ -55,6 +56,14 @@ public final class Powercap {
     }
 
     return diff.build();
+  }
+
+  /**
+   * Computes the forward differences of a {@link List} of {@link RaplSamples} using a left fold.
+   * Caveats for the above method that consumes only two samples apply to this as well.
+   */
+  public static List<RaplDifference> difference(Iterable<RaplSample> samples) {
+    return JraplUtils.foldLeft(samples, Powercap::difference, RaplSample.getDefaultInstance());
   }
 
   private static int getSocketCount() {
