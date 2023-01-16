@@ -1,13 +1,17 @@
 package jrapl;
 
 import static com.google.protobuf.util.Timestamps.fromMicros;
+import static java.util.stream.Collectors.toMap;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /** Simple wrapper around rapl access. */
 public final class Rapl {
-  // TODO: the delimiter is currently hacked-in to be ;. this was done because of the formatting
+  // TODO: the delimiter is currently hacked-in to be ;. this was done because of
+  // the formatting
   // issue associated with , vs . on certain locales
   private static final String ENERGY_STRING_DELIMITER = ";";
   private static final HashMap<String, Integer> COMPONENTS;
@@ -15,7 +19,32 @@ public final class Rapl {
   private static final double WRAP_AROUND;
   private static final double DRAM_WRAP_AROUND;
 
-  /** Returns an {@link RaplSample} populated by parsing the string returned by {@ readNative}. */
+  /**
+   * Returns the values read from rapl as a double array. Each component for a
+   * single socket is
+   * listed before the next socket. The component order associated with the other
+   * element can be
+   * determined from {@code getComponents}. The final element is always a
+   * microsecond precision unix
+   * timestamp.
+   *
+   * <p>
+   * For example, if the components are {"package": 0, "dram": 1} with socket 0
+   * and 1, the output
+   * will be [package_0, dram_0, package_1, dram_1, unixtime_seconds].
+   */
+  public static double[] read() {
+    double[] entries = Arrays.stream(readNative().split(ENERGY_STRING_DELIMITER))
+        .mapToDouble(e -> Double.parseDouble(e))
+        .toArray();
+    entries[entries.length - 1] /= 1000000; // convert to seconds to be consistent
+    return entries;
+  }
+
+  /**
+   * Returns an {@link RaplSample} populated by parsing the string returned by {@
+   * readNative}.
+   */
   public static RaplSample sample() {
     if (COMPONENTS.isEmpty()) {
       JraplUtils.LOGGER.info("no components founds; rapl likely not available");
@@ -24,16 +53,15 @@ public final class Rapl {
 
     String[] entries = readNative().split(ENERGY_STRING_DELIMITER);
 
-    RaplSample.Builder sample =
-        RaplSample.newBuilder()
-            .setTimestamp(fromMicros(Long.parseLong(entries[entries.length - 1])));
+    RaplSample.Builder sample = RaplSample.newBuilder()
+        .setSource(RaplSource.RAPL)
+        .setTimestamp(fromMicros(Long.parseLong(entries[entries.length - 1])));
 
     // pull out energy values
     for (int socket = 0; socket < MicroArchitecture.SOCKET_COUNT; socket++) {
-      RaplReading.Builder reading = RaplReading.newBuilder().setSocket(socket + 1);
+      RaplReading.Builder reading = RaplReading.newBuilder().setSocket(socket);
       for (String component : COMPONENTS.keySet()) {
-        double energy =
-            Double.parseDouble(entries[COMPONENTS.size() * socket + COMPONENTS.get(component)]);
+        double energy = Double.parseDouble(entries[COMPONENTS.size() * socket + COMPONENTS.get(component)]);
         switch (component) {
           case "pkg":
             reading.setPackage(energy);
@@ -56,40 +84,49 @@ public final class Rapl {
   }
 
   /**
-   * Computes the forward differences of two {@link RaplSamples}, assuming that they are correctly
-   * ordered and have matching sockets. Although this API guarantees that, samples from other
+   * Computes the forward differences of two {@link RaplSamples}, assuming that
+   * they are correctly
+   * ordered and have matching sockets. Although this API guarantees that, samples
+   * from other
    * sources may misbehave when using this.
    */
   public static RaplDifference difference(RaplSample first, RaplSample second) {
     // TODO: this assumes the order is good. we should be checking the timestamps
-    RaplDifference.Builder diff =
-        RaplDifference.newBuilder().setStart(first.getTimestamp()).setEnd(second.getTimestamp());
-    // TODO: this assumes the order is good. we should be checking the sockets match up
-    for (int socket = 0; socket < first.getReadingCount(); socket++) {
+    RaplDifference.Builder diff = RaplDifference.newBuilder().setStart(first.getTimestamp())
+        .setEnd(second.getTimestamp());
+    // TODO: this assumes the order is good. we should be checking the sockets match
+    // up
+    Map<Integer, RaplReading> firstReadings = first.getReadingList().stream()
+        .collect(toMap(r -> r.getSocket(), r -> r));
+    Map<Integer, RaplReading> secondReadings = second.getReadingList().stream()
+        .collect(toMap(r -> r.getSocket(), r -> r));
+    for (int socket : firstReadings.keySet()) {
       diff.addReading(
           RaplReading.newBuilder()
-              .setSocket(socket + 1)
+              .setSocket(socket)
               .setPackage(
                   diffWithWraparound(
-                      first.getReading(socket).getPackage(),
-                      second.getReading(socket).getPackage()))
+                      firstReadings.get(socket).getPackage(),
+                      secondReadings.get(socket).getPackage()))
               .setDram(
                   diffWithDramWraparound(
-                      first.getReading(socket).getDram(), second.getReading(socket).getDram()))
+                      firstReadings.get(socket).getDram(), secondReadings.get(socket).getDram()))
               .setCore(
                   diffWithWraparound(
-                      first.getReading(socket).getCore(), second.getReading(socket).getCore()))
+                      firstReadings.get(socket).getCore(), secondReadings.get(socket).getCore()))
               .setGpu(
                   diffWithWraparound(
-                      first.getReading(socket).getGpu(), second.getReading(socket).getGpu())));
+                      firstReadings.get(socket).getGpu(), secondReadings.get(socket).getGpu())));
     }
 
     return diff.build();
   }
 
   /**
-   * Computes the forward differences of a {@link List} of {@link RaplSamples} using a left fold.
-   * Caveats for the above method that consumes only two samples apply to this as well.
+   * Computes the forward differences of a {@link List} of {@link RaplSamples}
+   * using a left fold.
+   * Caveats for the above method that consumes only two samples apply to this as
+   * well.
    */
   public static List<RaplDifference> difference(Iterable<RaplSample> samples) {
     return JraplUtils.foldLeft(samples, Rapl::difference, RaplSample.getDefaultInstance());
@@ -113,7 +150,8 @@ public final class Rapl {
 
   private static HashMap<String, Integer> getComponents() {
     HashMap<String, Integer> components = new HashMap<>();
-    // TODO -- there's a 5th possible power domain, right? like full motherboard energy or something
+    // TODO -- there's a 5th possible power domain, right? like full motherboard
+    // energy or something
     int index = 0;
     for (String component : components().split(",")) {
       components.put(component, index++);
@@ -122,15 +160,22 @@ public final class Rapl {
   }
 
   /**
-   * Returns the energy of each component and the current timestamp as a delimited string. The
-   * energy values are floating point numbers representing the number of joules since the last boot.
-   * The order will be each socket's {@code components} followed by the microsecond timestamp:
+   * Returns the energy of each component and the current timestamp as a delimited
+   * string. The
+   * energy values are floating point numbers representing the number of joules
+   * since the last boot.
+   * The order will be each socket's {@code components} followed by the
+   * microsecond timestamp:
    *
-   * <p>socket0_component0,socket0_component1,socket1_component0,socket1_component1,...,timestamp
+   * <p>
+   * socket0_component0,socket0_component1,socket1_component0,socket1_component1,...,timestamp
    */
   private static native String readNative();
 
-  /** Returns the available components as a string ("dram,core,pkg"/"dram,core,gpu,pkg"/etc). */
+  /**
+   * Returns the available components as a string
+   * ("dram,core,pkg"/"dram,core,gpu,pkg"/etc).
+   */
   private static native String components();
 
   private static native int wrapAround();
@@ -150,23 +195,6 @@ public final class Rapl {
     }
   }
 
-  private Rapl() {}
-
-  public static void main(String[] args) throws Exception {
-    System.out.println("RAPL initialized");
-    System.out.println(String.format("Micro architecture: %s", MicroArchitecture.NAME));
-    System.out.println(String.format("Socket count: %d", MicroArchitecture.SOCKET_COUNT));
-
-    if (COMPONENTS.isEmpty()) {
-      System.out.println("No components found!");
-      return;
-    }
-    System.out.println(String.format("Available components: %s", COMPONENTS.keySet()));
-    System.out.println(String.format("Energy counter wrap around: %f", WRAP_AROUND));
-    if (WRAP_AROUND != DRAM_WRAP_AROUND) {
-      System.out.println(String.format("DRAM counter wrap around: %f", DRAM_WRAP_AROUND));
-    }
-
-    JraplUtils.poll(args, Rapl::sample, Rapl::difference);
+  private Rapl() {
   }
 }

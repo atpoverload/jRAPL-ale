@@ -1,29 +1,34 @@
 package jrapl;
 
 import static com.google.protobuf.util.Timestamps.fromMillis;
+import static java.util.stream.Collectors.toMap;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /** Simple wrapper to read powercap's energy. */
 public final class Powercap {
-  private static final String POWERCAP_PATH =
-      String.join("/", "/sys", "devices", "virtual", "powercap", "intel-rapl");
+  private static final String POWERCAP_PATH = String.join("/", "/sys", "devices", "virtual", "powercap", "intel-rapl");
 
   public static final int SOCKET_COUNT = getSocketCount();
 
-  /** Returns an {@link RaplSample} populated by parsing the string returned by {@ readNative}. */
+  /**
+   * Returns an {@link RaplSample} populated by parsing the string returned by {@
+   * readNative}.
+   */
   public static RaplSample sample() {
     if (SOCKET_COUNT == 0) {
       JraplUtils.LOGGER.info("couldn't check the socket count; powercap likely not available");
       return RaplSample.getDefaultInstance();
     }
-    RaplSample.Builder sample =
-        RaplSample.newBuilder().setTimestamp(fromMillis(Instant.now().toEpochMilli()));
+    RaplSample.Builder sample = RaplSample.newBuilder()
+        .setSource(RaplSource.POWERCAP)
+        .setTimestamp(fromMillis(Instant.now().toEpochMilli()));
 
     // pull out energy values
     for (int socket = 0; socket < SOCKET_COUNT; socket++) {
@@ -37,30 +42,39 @@ public final class Powercap {
   }
 
   /**
-   * Computes the forward differences of two {@link RaplSamples}, assuming that they are correctly
-   * ordered and have matching sockets. Although this API guarantees that, samples from other
+   * Computes the forward differences of two {@link RaplSamples}, assuming that
+   * they are correctly
+   * ordered and have matching sockets. Although this API guarantees that, samples
+   * from other
    * sources may misbehave when using this.
    */
   public static RaplDifference difference(RaplSample first, RaplSample second) {
     // TODO: this assumes the order is good. we should be checking the timestamps
-    RaplDifference.Builder diff =
-        RaplDifference.newBuilder().setStart(first.getTimestamp()).setEnd(second.getTimestamp());
-    // TODO: this assumes the order is good. we should be checking the sockets match up
-    for (int socket = 0; socket < first.getReadingCount(); socket++) {
+    RaplDifference.Builder diff = RaplDifference.newBuilder().setStart(first.getTimestamp())
+        .setEnd(second.getTimestamp());
+    // TODO: this assumes the order is good. we should be checking the sockets match
+    // up
+    Map<Integer, RaplReading> firstReadings = first.getReadingList().stream()
+        .collect(toMap(r -> r.getSocket(), r -> r));
+    Map<Integer, RaplReading> secondReadings = second.getReadingList().stream()
+        .collect(toMap(r -> r.getSocket(), r -> r));
+    for (int socket : firstReadings.keySet()) {
       diff.addReading(
           RaplReading.newBuilder()
-              .setSocket(socket + 1)
+              .setSocket(socket)
               .setPackage(
-                  second.getReading(socket).getPackage() - first.getReading(socket).getPackage())
-              .setDram(second.getReading(socket).getDram() - first.getReading(socket).getDram()));
+                  secondReadings.get(socket).getPackage() - firstReadings.get(socket).getPackage())
+              .setDram(secondReadings.get(socket).getDram() - firstReadings.get(socket).getDram()));
     }
 
     return diff.build();
   }
 
   /**
-   * Computes the forward differences of a {@link List} of {@link RaplSamples} using a left fold.
-   * Caveats for the above method that consumes only two samples apply to this as well.
+   * Computes the forward differences of a {@link List} of {@link RaplSamples}
+   * using a left fold.
+   * Caveats for the above method that consumes only two samples apply to this as
+   * well.
    */
   public static List<RaplDifference> difference(Iterable<RaplSample> samples) {
     return JraplUtils.foldLeft(samples, Powercap::difference, RaplSample.getDefaultInstance());
@@ -68,8 +82,7 @@ public final class Powercap {
 
   private static int getSocketCount() {
     try {
-      return (int)
-          Stream.of(new File(POWERCAP_PATH).list()).filter(f -> f.contains("intel-rapl")).count();
+      return (int) Stream.of(new File(POWERCAP_PATH).list()).filter(f -> f.contains("intel-rapl")).count();
     } catch (Exception e) {
       JraplUtils.LOGGER.info("couldn't check the socket count; powercap likely not available");
       return 0;
@@ -77,12 +90,13 @@ public final class Powercap {
   }
 
   /**
-   * Parses the contents of /sys/devices/virtual/powercap/intel-rapl/intel-rapl:<socket>/energy_uj,
-   * which contains the number of microjoules consumed by the package since boot as an integer.
+   * Parses the contents of
+   * /sys/devices/virtual/powercap/intel-rapl/intel-rapl:<socket>/energy_uj,
+   * which contains the number of microjoules consumed by the package since boot
+   * as an integer.
    */
   private static double readPackage(int socket) {
-    String energyFile =
-        String.join("/", POWERCAP_PATH, String.format("intel-rapl:%d", socket), "energy_uj");
+    String energyFile = String.join("/", POWERCAP_PATH, String.format("intel-rapl:%d", socket), "energy_uj");
     try (BufferedReader reader = new BufferedReader(new FileReader(energyFile))) {
       return Double.parseDouble(reader.readLine()) / 1000000;
     } catch (Exception e) {
@@ -93,32 +107,23 @@ public final class Powercap {
   /**
    * Parses the contents of
    *
-   * <p>/sys/devices/virtual/powercap/intel-rapl/intel-rapl:<socket>/intel-rapl:<socket>:0/energy_uj,
-   * which contains the number of microjoules consumed by the dram since boot as an integer.
+   * <p>
+   * /sys/devices/virtual/powercap/intel-rapl/intel-rapl:<socket>/intel-rapl:<socket>:0/energy_uj,
+   * which contains the number of microjoules consumed by the dram since boot as
+   * an integer.
    */
   private static double readDram(int socket) {
     String socketPrefix = String.format("intel-rapl:%d", socket);
-    String energyFile =
-        String.join(
-            "/",
-            POWERCAP_PATH,
-            socketPrefix,
-            String.format("%s:%d", socketPrefix, socket),
-            "energy_uj");
+    String energyFile = String.join(
+        "/",
+        POWERCAP_PATH,
+        socketPrefix,
+        String.format("%s:%d", socketPrefix, socket),
+        "energy_uj");
     try (BufferedReader reader = new BufferedReader(new FileReader(energyFile))) {
       return Double.parseDouble(reader.readLine()) / 1000000;
     } catch (Exception e) {
       return 0;
     }
-  }
-
-  private Powercap() {}
-
-  public static void main(String[] args) throws Exception {
-    System.out.println("powercap initialized");
-
-    System.out.println(String.format("Socket count: %d", SOCKET_COUNT));
-
-    JraplUtils.poll(args, Powercap::sample, Powercap::difference);
   }
 }

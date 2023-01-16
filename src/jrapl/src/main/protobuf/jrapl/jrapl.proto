@@ -7,6 +7,12 @@ option java_package = "jrapl";
 
 import "google/protobuf/timestamp.proto";
 
+enum RaplSource {
+  UNKNOWN_SOURCE = 0;
+  RAPL = 1;
+  POWERCAP = 2;
+}
+
 message RaplReading {
   uint32 socket = 1;
   // energy value in joules
@@ -18,11 +24,12 @@ message RaplReading {
 
 // absolute energy consumption since boot
 message RaplSample {
-  google.protobuf.Timestamp timestamp = 1;
-  repeated RaplReading reading = 2;
+  RaplSource source = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  repeated RaplReading reading = 3;
 }
 
-// relative energy consumption between readings of two energy samples
+// relative energy consumption between readings of two rapl samples
 message RaplDifference {
   google.protobuf.Timestamp start = 1;
   google.protobuf.Timestamp end = 2;
