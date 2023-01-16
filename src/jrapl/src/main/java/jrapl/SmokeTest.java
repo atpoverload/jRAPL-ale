@@ -1,5 +1,6 @@
 package jrapl;
 
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
 
 import com.google.protobuf.util.Durations;
@@ -54,14 +55,20 @@ final class SmokeTest {
     }
 
     JraplUtils.LOGGER.info(
-        String.format(
-            "rapl report - time: %.3fs, energy: %.3fJ",
-            (double) Durations.toMicros(Timestamps.between(diff.getStart(), diff.getEnd()))
-                / 1000000,
+        String.join(
+            System.lineSeparator(),
+            String.format(
+                "rapl report - time: %.3fs",
+                (double) Durations.toMicros(Timestamps.between(diff.getStart(), diff.getEnd()))
+                    / 1000000),
             diff.getReadingList()
                 .stream()
-                .mapToDouble(r -> r.getPackage() + r.getDram() + r.getCore() + r.getGpu())
-                .sum()));
+                .map(
+                    r -> String.format(
+                        "socket: %d, package: %.3f, dram: %.3f, core: %.3f, gpu: %.3f",
+                        r.getSocket(),
+                        r.getPackage(), r.getDram(), r.getCore(), r.getGpu()))
+                .collect(joining(System.lineSeparator()))));
 
     return true;
   }
@@ -173,22 +180,23 @@ final class SmokeTest {
                 powercapReadings.get(socket).getDram(), raplReadings.get(socket).getDram()));
         return false;
       }
-
-      JraplUtils.LOGGER.info(
-          String.format(
-              "equivalence report - elapsed time difference: %.3fs, total energy difference: %.3fJ",
-              (double) Durations.toMicros(Timestamps.between(rapl.getStart(), rapl.getEnd()))
-                  / 1000000
-                  - (double) Durations.toMicros(
-                      Timestamps.between(powercap.getStart(), powercap.getEnd()))
-                      / 1000000,
-              rapl.getReadingList().stream().mapToDouble(r -> r.getPackage() + r.getDram()).sum()
-                  - powercap
-                      .getReadingList()
-                      .stream()
-                      .mapToDouble(r -> r.getPackage() + r.getDram())
-                      .sum()));
     }
+
+    JraplUtils.LOGGER.info(
+        String.format(
+            "equivalence report - elapsed time difference: %.3fs, total energy difference: %.3fJ",
+            (double) Durations.toMicros(Timestamps.between(rapl.getStart(), rapl.getEnd()))
+                / 1000000
+                - (double) Durations.toMicros(
+                    Timestamps.between(powercap.getStart(), powercap.getEnd()))
+                    / 1000000,
+            rapl.getReadingList().stream().mapToDouble(r -> r.getPackage() + r.getDram()).sum()
+                - powercap
+                    .getReadingList()
+                    .stream()
+                    .mapToDouble(r -> r.getPackage() + r.getDram())
+                    .sum()));
+
     return true;
   }
 
