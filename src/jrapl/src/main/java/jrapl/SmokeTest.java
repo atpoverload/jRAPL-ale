@@ -204,10 +204,10 @@ final class SmokeTest {
             System.lineSeparator(),
             String.format(
                 "equivalence report - elapsed time difference: %.3fs",
-                (double) (Durations.toMicros(Timestamps.between(rapl.getStart(), rapl.getEnd()))
+                Math.abs((double) (Durations.toMicros(Timestamps.between(rapl.getStart(), rapl.getEnd()))
                     - Durations.toMicros(
                         Timestamps.between(powercap.getStart(), powercap.getEnd())))
-                    / 1000000,
+                    / 1000000),
                 raplReadings
                     .values()
                     .stream()

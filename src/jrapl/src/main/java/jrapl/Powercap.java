@@ -118,7 +118,7 @@ public final class Powercap {
         "/",
         POWERCAP_PATH,
         socketPrefix,
-        String.format("%s:%d", socketPrefix, socket),
+        String.format("%s:0", socketPrefix),
         "energy_uj");
     try (BufferedReader reader = new BufferedReader(new FileReader(energyFile))) {
       return Double.parseDouble(reader.readLine()) / 1000000;
