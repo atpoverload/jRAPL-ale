@@ -55,7 +55,7 @@ final class SmokeTest {
 
     JraplUtils.LOGGER.info(
         String.format(
-            "time: %ss, energy: %sJ",
+            "rapl report - time: %.3fs, energy: %.3fJ",
             (double) Durations.toMicros(Timestamps.between(diff.getStart(), diff.getEnd()))
                 / 1000000,
             diff.getReadingList()
@@ -97,7 +97,7 @@ final class SmokeTest {
 
     JraplUtils.LOGGER.info(
         String.format(
-            "time: %ss, energy: %sJ",
+            "powercap report - time: %.3fs, energy: %.3fJ",
             (double) Durations.toMicros(Timestamps.between(diff.getStart(), diff.getEnd()))
                 / 1000000,
             diff.getReadingList().stream().mapToDouble(r -> r.getPackage() + r.getDram()).sum()));
@@ -173,8 +173,22 @@ final class SmokeTest {
                 powercapReadings.get(socket).getDram(), raplReadings.get(socket).getDram()));
         return false;
       }
-    }
 
+      JraplUtils.LOGGER.info(
+          String.format(
+              "equivalence report - elapsed time difference: %.3fs, total energy difference: %.3fJ",
+              (double) Durations.toMicros(Timestamps.between(rapl.getStart(), rapl.getEnd()))
+                  / 1000000
+                  - (double) Durations.toMicros(
+                      Timestamps.between(powercap.getStart(), powercap.getEnd()))
+                      / 1000000,
+              rapl.getReadingList().stream().mapToDouble(r -> r.getPackage() + r.getDram()).sum()
+                  - powercap
+                      .getReadingList()
+                      .stream()
+                      .mapToDouble(r -> r.getPackage() + r.getDram())
+                      .sum()));
+    }
     return true;
   }
 
