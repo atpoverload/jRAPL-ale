@@ -76,7 +76,7 @@ final class SmokeTest {
                 .map(
                     r ->
                         String.format(
-                            " - socket: %d, package: %.3f, dram: %.3f, core: %.3f, gpu: %.3f",
+                            " - socket: %d, package: %.3fJ, dram: %.3fJ, core: %.3fJ, gpu: %.3fJ",
                             r.getSocket(), r.getPackage(), r.getDram(), r.getCore(), r.getGpu()))
                 .collect(joining(System.lineSeparator()))));
     return true;
@@ -123,7 +123,7 @@ final class SmokeTest {
                 .map(
                     r ->
                         String.format(
-                            " - socket: %d, package: %.3f, dram: %.3f",
+                            " - socket: %d, package: %.3fJ, dram: %.3fJ",
                             r.getSocket(), r.getPackage(), r.getDram()))
                 .collect(joining(System.lineSeparator()))));
     return true;
@@ -206,24 +206,24 @@ final class SmokeTest {
         String.join(
             System.lineSeparator(),
             String.format(
-                "equivalence report - elapsed time difference: %.3fs",
+                "equivalence report - elapsed time difference: %.6fs",
                 Math.abs(
                     (double)
                             (Durations.toMicros(Timestamps.between(rapl.getStart(), rapl.getEnd()))
                                 - Durations.toMicros(
                                     Timestamps.between(powercap.getStart(), powercap.getEnd())))
-                        / 1000000),
-                raplReadings
-                    .values()
-                    .stream()
-                    .map(
-                        r ->
-                            String.format(
-                                " - socket: %d, package: %.3f, dram: %.3f",
-                                r.getSocket(),
-                                r.getPackage() - powercapReadings.get(r.getSocket()).getPackage(),
-                                r.getDram() - powercapReadings.get(r.getSocket()).getDram()))
-                    .collect(joining(System.lineSeparator())))));
+                        / 1000000)),
+            raplReadings
+                .values()
+                .stream()
+                .map(
+                    r ->
+                        String.format(
+                            " - socket: %dJ, package: %.3fJ, dram: %.3fJ",
+                            r.getSocket(),
+                            r.getPackage() - powercapReadings.get(r.getSocket()).getPackage(),
+                            r.getDram() - powercapReadings.get(r.getSocket()).getDram()))
+                .collect(joining(System.lineSeparator()))));
     return true;
   }
 
