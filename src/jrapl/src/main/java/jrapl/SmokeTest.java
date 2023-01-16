@@ -68,7 +68,6 @@ final class SmokeTest {
                         " - socket: %d, package: %.3f, dram: %.3f, core: %.3f, gpu: %.3f",
                         r.getSocket(), r.getPackage(), r.getDram(), r.getCore(), r.getGpu()))
                 .collect(joining(System.lineSeparator()))));
-
     return true;
   }
 
@@ -115,7 +114,6 @@ final class SmokeTest {
                         " - socket: %d, package: %.3f, dram: %.3f",
                         r.getSocket(), r.getPackage(), r.getDram()))
                 .collect(joining(System.lineSeparator()))));
-
     return true;
   }
 
@@ -207,31 +205,6 @@ final class SmokeTest {
                             r.getPackage() - powercapReadings.get(r.getSocket()).getPackage(),
                             r.getDram() - powercapReadings.get(r.getSocket()).getDram()))
                     .collect(joining(System.lineSeparator())))));
-
-    JraplUtils.LOGGER.info(
-        String.format(
-            "equivalence report - elapsed time difference: %.3fs",
-            (double) (Durations.toMicros(Timestamps.between(rapl.getStart(), rapl.getEnd()))
-                - Durations.toMicros(
-                    Timestamps.between(powercap.getStart(), powercap.getEnd())))
-                / 1000000,
-            diff.getReadingList().stream().mapToDouble(r -> r.getPackage() + r.getDram()).sum()));
-
-    JraplUtils.LOGGER.info(
-        String.format(
-            "equivalence report - elapsed time difference: %.3fs, total energy difference: %.3fJ",
-            (double) Durations.toMicros(Timestamps.between(rapl.getStart(), rapl.getEnd()))
-                / 1000000
-                - (double) Durations.toMicros(
-                    Timestamps.between(powercap.getStart(), powercap.getEnd()))
-                    / 1000000,
-            rapl.getReadingList().stream().mapToDouble(r -> r.getPackage() + r.getDram()).sum()
-                - powercap
-                    .getReadingList()
-                    .stream()
-                    .mapToDouble(r -> r.getPackage() + r.getDram())
-                    .sum()));
-
     return true;
   }
 
