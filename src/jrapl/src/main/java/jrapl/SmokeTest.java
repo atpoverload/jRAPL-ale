@@ -12,6 +12,18 @@ import java.util.Map;
  * reporting similarly.
  */
 final class SmokeTest {
+  private static int fib(int n) {
+    if (n == 0 || n == 1) {
+      return 1;
+    } else {
+      return fib(n - 1) + fib(n - 2);
+    }
+  }
+
+  private static void exercise() {
+    fib(42);
+  }
+
   private static boolean raplAvailable() throws Exception {
     if (!NativeLibrary.initialize()) {
       return false;
@@ -34,7 +46,7 @@ final class SmokeTest {
 
     RaplSample start = Rapl.sample();
 
-    Thread.sleep(1000);
+    exercise();
 
     RaplDifference diff = Rapl.difference(start, Rapl.sample());
 
@@ -83,7 +95,7 @@ final class SmokeTest {
 
     RaplSample start = Powercap.sample();
 
-    Thread.sleep(1000);
+    exercise();
 
     RaplDifference diff = Powercap.difference(start, Powercap.sample());
 
@@ -133,7 +145,7 @@ final class SmokeTest {
     RaplSample rapl = Rapl.sample();
     RaplSample powercap = Powercap.sample();
 
-    Thread.sleep(1000);
+    exercise();
 
     return isSimilar(
         Rapl.difference(rapl, Rapl.sample()), Powercap.difference(powercap, Powercap.sample()));
@@ -196,7 +208,8 @@ final class SmokeTest {
                     - Durations.toMicros(
                         Timestamps.between(powercap.getStart(), powercap.getEnd())))
                     / 1000000,
-                raplReadings.values()
+                raplReadings
+                    .values()
                     .stream()
                     .map(
                         r -> String.format(
