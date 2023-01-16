@@ -196,7 +196,7 @@ final class SmokeTest {
                     - Durations.toMicros(
                         Timestamps.between(powercap.getStart(), powercap.getEnd())))
                     / 1000000,
-                raplReadings.getReadingList()
+                raplReadings.values()
                     .stream()
                     .map(
                         r -> String.format(
