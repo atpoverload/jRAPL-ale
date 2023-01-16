@@ -37,8 +37,11 @@ final class SmokeTest {
 
     RaplDifference diff = Rapl.difference(start, Rapl.sample());
 
-    if (Timestamps.compare(diff.getStart(), diff.getEnd()) < 0) {
-      JraplUtils.LOGGER.info("end timestamp is greater than start timestamp");
+    if (Timestamps.compare(diff.getStart(), diff.getEnd()) > 0) {
+      JraplUtils.LOGGER.info(
+          String.format(
+              "end timestamp (%d) is greater than start timestamp (%d)",
+              Timestamps.toMicros(diff.getEnd()), Timestamps.toMicros(diff.getStart())));
       return false;
     }
 
@@ -79,8 +82,11 @@ final class SmokeTest {
 
     RaplDifference diff = Powercap.difference(start, Powercap.sample());
 
-    if (Timestamps.compare(diff.getStart(), diff.getEnd()) < 0) {
-      JraplUtils.LOGGER.info("end timestamp is greater than start timestamp");
+    if (Timestamps.compare(diff.getStart(), diff.getEnd()) > 0) {
+      JraplUtils.LOGGER.info(
+          String.format(
+              "end timestamp (%d) is greater than start timestamp (%d)",
+              Timestamps.toMicros(diff.getEnd()), Timestamps.toMicros(diff.getStart())));
       return false;
     }
 
