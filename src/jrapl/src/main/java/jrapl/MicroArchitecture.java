@@ -23,6 +23,5 @@ public final class MicroArchitecture {
     }
   }
 
-  private MicroArchitecture() {
-  }
+  private MicroArchitecture() {}
 }

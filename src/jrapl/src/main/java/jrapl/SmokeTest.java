@@ -7,10 +7,7 @@ import com.google.protobuf.util.Durations;
 import com.google.protobuf.util.Timestamps;
 import java.util.Map;
 
-/**
- * A smoke test to check which components are available and if they are
- * reporting similarly.
- */
+/** A smoke test to check which components are available and if they are reporting similarly. */
 final class SmokeTest {
   private static int fib(int n) {
     if (n == 0 || n == 1) {
@@ -59,9 +56,10 @@ final class SmokeTest {
     }
 
     if (diff.getReadingList()
-        .stream()
-        .mapToDouble(r -> r.getPackage() + r.getDram() + r.getCore() + r.getGpu())
-        .sum() == 0) {
+            .stream()
+            .mapToDouble(r -> r.getPackage() + r.getDram() + r.getCore() + r.getGpu())
+            .sum()
+        == 0) {
       JraplUtils.LOGGER.info("no energy consumed with the difference of two rapl samples!");
       return false;
     }
@@ -76,9 +74,10 @@ final class SmokeTest {
             diff.getReadingList()
                 .stream()
                 .map(
-                    r -> String.format(
-                        " - socket: %d, package: %.3f, dram: %.3f, core: %.3f, gpu: %.3f",
-                        r.getSocket(), r.getPackage(), r.getDram(), r.getCore(), r.getGpu()))
+                    r ->
+                        String.format(
+                            " - socket: %d, package: %.3f, dram: %.3f, core: %.3f, gpu: %.3f",
+                            r.getSocket(), r.getPackage(), r.getDram(), r.getCore(), r.getGpu()))
                 .collect(joining(System.lineSeparator()))));
     return true;
   }
@@ -122,9 +121,10 @@ final class SmokeTest {
             diff.getReadingList()
                 .stream()
                 .map(
-                    r -> String.format(
-                        " - socket: %d, package: %.3f, dram: %.3f",
-                        r.getSocket(), r.getPackage(), r.getDram()))
+                    r ->
+                        String.format(
+                            " - socket: %d, package: %.3f, dram: %.3f",
+                            r.getSocket(), r.getPackage(), r.getDram()))
                 .collect(joining(System.lineSeparator()))));
     return true;
   }
@@ -176,13 +176,15 @@ final class SmokeTest {
       return false;
     }
 
-    Map<Integer, RaplReading> raplReadings = rapl.getReadingList().stream().collect(toMap(r -> r.getSocket(), r -> r));
-    Map<Integer, RaplReading> powercapReadings = powercap.getReadingList().stream()
-        .collect(toMap(r -> r.getSocket(), r -> r));
+    Map<Integer, RaplReading> raplReadings =
+        rapl.getReadingList().stream().collect(toMap(r -> r.getSocket(), r -> r));
+    Map<Integer, RaplReading> powercapReadings =
+        powercap.getReadingList().stream().collect(toMap(r -> r.getSocket(), r -> r));
     raplReadings.keySet().equals(powercapReadings.keySet());
     for (int socket : raplReadings.keySet()) {
       if (Math.abs(
-          raplReadings.get(socket).getPackage() - powercapReadings.get(socket).getPackage()) > 1) {
+              raplReadings.get(socket).getPackage() - powercapReadings.get(socket).getPackage())
+          > 1) {
         JraplUtils.LOGGER.info(
             String.format(
                 "powercap package energy (%f) does not match rapl package energy (%f)",
@@ -190,7 +192,8 @@ final class SmokeTest {
         return false;
       }
 
-      if (Math.abs(raplReadings.get(socket).getDram() - powercapReadings.get(socket).getDram()) > 1) {
+      if (Math.abs(raplReadings.get(socket).getDram() - powercapReadings.get(socket).getDram())
+          > 1) {
         JraplUtils.LOGGER.info(
             String.format(
                 "powercap dram energy (%f) does not match rapl dram energy (%f)",
@@ -204,19 +207,22 @@ final class SmokeTest {
             System.lineSeparator(),
             String.format(
                 "equivalence report - elapsed time difference: %.3fs",
-                Math.abs((double) (Durations.toMicros(Timestamps.between(rapl.getStart(), rapl.getEnd()))
-                    - Durations.toMicros(
-                        Timestamps.between(powercap.getStart(), powercap.getEnd())))
-                    / 1000000),
+                Math.abs(
+                    (double)
+                            (Durations.toMicros(Timestamps.between(rapl.getStart(), rapl.getEnd()))
+                                - Durations.toMicros(
+                                    Timestamps.between(powercap.getStart(), powercap.getEnd())))
+                        / 1000000),
                 raplReadings
                     .values()
                     .stream()
                     .map(
-                        r -> String.format(
-                            " - socket: %d, package: %.3f, dram: %.3f",
-                            r.getSocket(),
-                            r.getPackage() - powercapReadings.get(r.getSocket()).getPackage(),
-                            r.getDram() - powercapReadings.get(r.getSocket()).getDram()))
+                        r ->
+                            String.format(
+                                " - socket: %d, package: %.3f, dram: %.3f",
+                                r.getSocket(),
+                                r.getPackage() - powercapReadings.get(r.getSocket()).getPackage(),
+                                r.getDram() - powercapReadings.get(r.getSocket()).getDram()))
                     .collect(joining(System.lineSeparator())))));
     return true;
   }
