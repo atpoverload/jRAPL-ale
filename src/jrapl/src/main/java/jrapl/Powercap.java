@@ -32,7 +32,7 @@ public final class Powercap {
 
     // pull out energy values
     for (int socket = 0; socket < SOCKET_COUNT; socket++) {
-      RaplReading.Builder reading = RaplReading.newBuilder().setSocket(socket + 1);
+      RaplReading.Builder reading = RaplReading.newBuilder().setSocket(socket);
       reading.setPackage(readPackage(socket));
       reading.setDram(readDram(socket));
       sample.addReading(reading);

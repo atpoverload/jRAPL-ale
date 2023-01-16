@@ -12,7 +12,7 @@ import java.util.Map;
  */
 final class SmokeTest {
   private static boolean raplAvailable() {
-    if (NativeLibrary.initialize()) {
+    if (!NativeLibrary.initialize()) {
       return false;
     }
 
