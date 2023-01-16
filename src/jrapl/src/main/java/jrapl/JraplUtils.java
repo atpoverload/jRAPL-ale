@@ -16,41 +16,13 @@ import java.util.logging.Logger;
 final class JraplUtils {
   static Logger LOGGER = getLogger();
 
-  static void poll(
-      String[] args,
-      Supplier<RaplSample> sample,
-      BiFunction<RaplSample, RaplSample, RaplDifference> difference)
-      throws Exception {
-    if (args.length == 0) {
-      return;
-    } else if (args.length > 2 && args[0] != "--poll") {
-      System.out.println(
-          String.format(
-              "wrong arguments for polling: expected --poll <ms>; got %s", Arrays.toString(args)));
-      return;
-    }
-
-    long pollingTime = 1000;
-    if (args.length == 2) {
-      pollingTime = Long.parseLong(args[1]);
-    }
-
-    RaplSample lastSample = sample.get();
-    while (true) {
-      Thread.sleep(pollingTime);
-      RaplSample nextSample = sample.get();
-      System.out.println(difference.apply(lastSample, nextSample));
-      lastSample = nextSample;
-    }
-  }
-
   /** Helper method that implements the left fold operation. */
-  static <T, R> List<R> foldLeft(Iterable<T> iterable, BiFunction<T, T, R> difference, T start) {
+  static <T, R> List<R> foldLeft(Iterable<T> iterable, BiFunction<T, T, R> func, T start) {
     ArrayList<R> diffs = new ArrayList<>();
     T previous = start;
     for (T element : iterable) {
       if (!previous.equals(start)) {
-        diffs.add(difference.apply(previous, element));
+        diffs.add(func.apply(previous, element));
       }
       previous = element;
     }

@@ -11,7 +11,7 @@ import java.util.Map;
  * reporting similarly.
  */
 final class SmokeTest {
-  private static boolean raplAvailable() {
+  private static boolean raplAvailable() throws Exception {
     if (!NativeLibrary.initialize()) {
       return false;
     }
@@ -31,16 +31,40 @@ final class SmokeTest {
       return false;
     }
 
+    RaplSample start = Rapl.sample();
+
+    Thread.sleep(1000);
+
+    RaplDifference diff = Rapl.difference(start, Rapl.sample());
+    if (diff.getReadingList()
+        .stream()
+        .mapToDouble(r -> r.getPackage() + r.getDram() + r.getCore() + r.getGpu())
+        .sum() == 0) {
+      JraplUtils.LOGGER.info("no energy consumed with the difference of two rapl samples!");
+      return false;
+    }
+
     return true;
   }
 
-  private static boolean powercapAvailable() {
+  private static boolean powercapAvailable() throws Exception {
     if (Powercap.SOCKET_COUNT < 1) {
       return false;
     }
 
     if (Powercap.sample().equals(RaplSample.getDefaultInstance())) {
       JraplUtils.LOGGER.info("no data was produced from sampling powercap!");
+      return false;
+    }
+
+    RaplSample start = Powercap.sample();
+
+    Thread.sleep(1000);
+
+    RaplDifference diff = Powercap.difference(start, Powercap.sample());
+    diff.getReadingList().stream();
+    if (diff.getReadingList().stream().mapToDouble(r -> r.getPackage() + r.getDram()).sum() == 0) {
+      JraplUtils.LOGGER.info("no energy consumed with the difference of two powercap samples!");
       return false;
     }
 
@@ -70,7 +94,7 @@ final class SmokeTest {
   }
 
   private static boolean isSimilar(RaplDifference rapl, RaplDifference powercap) {
-    if (Durations.toMicros(Timestamps.between(rapl.getStart(), powercap.getStart())) > 1000000) {
+    if (Durations.toMicros(Timestamps.between(rapl.getStart(), powercap.getStart())) > 2000) {
       JraplUtils.LOGGER.info(
           String.format(
               "powercap start time (%s) does not match rapl start time (%s)",
@@ -78,7 +102,7 @@ final class SmokeTest {
       return false;
     }
 
-    if (Durations.toMicros(Timestamps.between(rapl.getEnd(), powercap.getEnd())) > 1000000) {
+    if (Durations.toMicros(Timestamps.between(rapl.getEnd(), powercap.getEnd())) > 2000) {
       JraplUtils.LOGGER.info(
           String.format(
               "powercap end time (%s) does not match rapl end time (%s)",
@@ -97,9 +121,9 @@ final class SmokeTest {
     Map<Integer, RaplReading> raplReadings = rapl.getReadingList().stream().collect(toMap(r -> r.getSocket(), r -> r));
     Map<Integer, RaplReading> powercapReadings = powercap.getReadingList().stream()
         .collect(toMap(r -> r.getSocket(), r -> r));
+    raplReadings.keySet().equals(powercapReadings.keySet());
     for (int socket : raplReadings.keySet()) {
-      if (Math.abs(
-          raplReadings.get(socket).getPackage() - powercapReadings.get(socket).getPackage()) < 0.000001) {
+      if (Math.abs(raplReadings.get(socket).getPackage() - powercapReadings.get(socket).getPackage()) < 1) {
         JraplUtils.LOGGER.info(
             String.format(
                 "powercap package energy (%f) does not match rapl package energy (%f)",
@@ -107,7 +131,7 @@ final class SmokeTest {
         return false;
       }
 
-      if (Math.abs(raplReadings.get(socket).getDram() - powercapReadings.get(socket).getDram()) < 0.000001) {
+      if (Math.abs(raplReadings.get(socket).getDram() - powercapReadings.get(socket).getDram()) < 1) {
         JraplUtils.LOGGER.info(
             String.format(
                 "powercap dram energy (%f) does not match rapl dram energy (%f)",
