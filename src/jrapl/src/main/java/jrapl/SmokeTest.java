@@ -68,7 +68,8 @@ final class SmokeTest {
         String.join(
             System.lineSeparator(),
             String.format(
-                "rapl report - time: %.3fs",
+                "rapl report - microarchitecture: %s, time: %.3fs",
+                MicroArchitecture.NAME,
                 (double) Durations.toMicros(Timestamps.between(diff.getStart(), diff.getEnd()))
                     / 1000000),
             diff.getReadingList()
@@ -219,10 +220,11 @@ final class SmokeTest {
                 .map(
                     r ->
                         String.format(
-                            " - socket: %dJ, package: %.3fJ, dram: %.3fJ",
+                            " - socket: %dJ, package difference: %.3fJ, dram difference: %.3fJ",
                             r.getSocket(),
-                            r.getPackage() - powercapReadings.get(r.getSocket()).getPackage(),
-                            r.getDram() - powercapReadings.get(r.getSocket()).getDram()))
+                            Math.abs(
+                                r.getPackage() - powercapReadings.get(r.getSocket()).getPackage()),
+                            Math.abs(r.getDram() - powercapReadings.get(r.getSocket()).getDram())))
                 .collect(joining(System.lineSeparator()))));
     return true;
   }

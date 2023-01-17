@@ -115,14 +115,6 @@ public final class Rapl {
     return diff.build();
   }
 
-  /**
-   * Computes the forward differences of a {@link List} of {@link RaplSamples} using a left fold.
-   * Caveats for the above method that consumes only two samples apply to this as well.
-   */
-  public static List<RaplDifference> difference(Iterable<RaplSample> samples) {
-    return JraplUtils.foldLeft(samples, Rapl::difference, RaplSample.getDefaultInstance());
-  }
-
   private static double diffWithWraparound(double first, double second) {
     double energy = second - first;
     if (energy < 0) {
