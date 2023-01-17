@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.toMap;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /** Simple wrapper around rapl access. */
