@@ -9,8 +9,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public final class JRaplUtils {
-  private static final String SAMPLE_CSV_HEADER = "timestamp,package,dram,core,gpu";
-  private static final String DIFFERENCE_CSV_HEADER = "start,end,package,dram,core,gpu";
+  static final String SAMPLE_CSV_HEADER = "timestamp_us,socket,package,dram,core,gpu";
+  static final String DIFFERENCE_CSV_HEADER = "start_us,end_us,socket,package,dram,core,gpu";
 
   /** Converts samples to a csv. */
   public static String samplesToCsv(JRaplSample... samples) {
@@ -62,6 +62,7 @@ public final class JRaplUtils {
   private static String toCsv(JRaplReading reading) {
     return String.join(
         ",",
+        Integer.toString(reading.getSocket()),
         Double.toString(reading.getPackage()),
         Double.toString(reading.getDram()),
         Double.toString(reading.getCore()),
