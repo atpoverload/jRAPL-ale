@@ -7,11 +7,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Simple wrapper around rapl access. */
+/** Simple wrapper around rapl access that requires libjrapl.so. */
 public final class Rapl {
   // TODO: the delimiter is currently hacked-in to be ;. this was done because of
-  // the formatting
-  // issue associated with , vs . on certain locales
+  // the formatting issue associated with , vs . on certain locales
   private static final String ENERGY_STRING_DELIMITER = ";";
   private static final HashMap<String, Integer> COMPONENTS;
 
@@ -36,23 +35,23 @@ public final class Rapl {
     return entries;
   }
 
-  /** Returns an {@link RaplSample} populated by parsing the string returned by {@ readNative}. */
-  public static RaplSample sample() {
+  /** Returns an {@link JRaplSample} populated by parsing the string returned by {@ readNative}. */
+  public static JRaplSample sample() {
     if (COMPONENTS.isEmpty()) {
-      JraplUtils.LOGGER.info("no components founds; rapl likely not available");
-      return RaplSample.getDefaultInstance();
+      JRaplLogger.LOGGER.info("no components founds; rapl likely not available");
+      return JRaplSample.getDefaultInstance();
     }
 
     String[] entries = readNative().split(ENERGY_STRING_DELIMITER);
 
-    RaplSample.Builder sample =
-        RaplSample.newBuilder()
-            .setSource(RaplSource.RAPL)
+    JRaplSample.Builder sample =
+        JRaplSample.newBuilder()
+            .setSource(JRaplSource.RAPL)
             .setTimestamp(fromMicros(Long.parseLong(entries[entries.length - 1])));
 
     // pull out energy values
     for (int socket = 0; socket < MicroArchitecture.SOCKET_COUNT; socket++) {
-      RaplReading.Builder reading = RaplReading.newBuilder().setSocket(socket);
+      JRaplReading.Builder reading = JRaplReading.newBuilder().setSocket(socket);
       for (String component : COMPONENTS.keySet()) {
         double energy =
             Double.parseDouble(entries[COMPONENTS.size() * socket + COMPONENTS.get(component)]);
@@ -78,23 +77,23 @@ public final class Rapl {
   }
 
   /**
-   * Computes the forward differences of two {@link RaplSamples}, assuming that they are correctly
+   * Computes the forward differences of two {@link JRaplSamples}, assuming that they are correctly
    * ordered and have matching sockets. Although this API guarantees that, samples from other
    * sources may misbehave when using this.
    */
-  public static RaplDifference difference(RaplSample first, RaplSample second) {
+  public static JRaplDifference difference(JRaplSample first, JRaplSample second) {
     // TODO: this assumes the order is good. we should be checking the timestamps
-    RaplDifference.Builder diff =
-        RaplDifference.newBuilder().setStart(first.getTimestamp()).setEnd(second.getTimestamp());
+    JRaplDifference.Builder diff =
+        JRaplDifference.newBuilder().setStart(first.getTimestamp()).setEnd(second.getTimestamp());
     // TODO: this assumes the order is good. we should be checking the sockets match
     // up
-    Map<Integer, RaplReading> firstReadings =
+    Map<Integer, JRaplReading> firstReadings =
         first.getReadingList().stream().collect(toMap(r -> r.getSocket(), r -> r));
-    Map<Integer, RaplReading> secondReadings =
+    Map<Integer, JRaplReading> secondReadings =
         second.getReadingList().stream().collect(toMap(r -> r.getSocket(), r -> r));
     for (int socket : firstReadings.keySet()) {
       diff.addReading(
-          RaplReading.newBuilder()
+          JRaplReading.newBuilder()
               .setSocket(socket)
               .setPackage(
                   diffWithWraparound(
@@ -163,7 +162,7 @@ public final class Rapl {
       DRAM_WRAP_AROUND = dramWrapAround();
       COMPONENTS = getComponents();
     } else {
-      JraplUtils.LOGGER.info("native library couldn't be initialized; rapl likely not available");
+      JRaplLogger.LOGGER.info("native library couldn't be initialized; rapl likely not available");
       WRAP_AROUND = 0;
       DRAM_WRAP_AROUND = 0;
       COMPONENTS = new HashMap<>();

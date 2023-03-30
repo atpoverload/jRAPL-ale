@@ -1,49 +1,76 @@
 package jrapl;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Formatter;
-import java.util.logging.Handler;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
+import static com.google.protobuf.util.Timestamps.toMicros;
+import static java.util.stream.Collectors.joining;
 
-final class JraplUtils {
-  static Logger LOGGER = getLogger();
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
-  private static final SimpleDateFormat dateFormatter =
-      new SimpleDateFormat("yyyy-MM-dd HH:mm:ss a z");
+public final class JRaplUtils {
+  private static final String SAMPLE_CSV_HEADER = "timestamp,package,dram,core,gpu";
+  private static final String DIFFERENCE_CSV_HEADER = "start,end,package,dram,core,gpu";
 
-  private static String makePrefix(Date date) {
+  /** Converts samples to a csv. */
+  public static String samplesToCsv(JRaplSample... samples) {
+    return samplesToCsv(Arrays.stream(samples));
+  }
+
+  /** Converts a {@link List} of samples to a csv. */
+  public static String samplesToCsv(List<JRaplSample> samples) {
+    return samplesToCsv(samples.stream());
+  }
+
+  /** Converts difference to a csv. */
+  public static String diffsToCsv(JRaplDifference... differences) {
+    return diffsToCsv(Arrays.stream(differences));
+  }
+
+  /** Converts a {@link List} of differences to a csv. */
+  public static String diffsToCsv(List<JRaplDifference> differences) {
+    return diffsToCsv(differences.stream());
+  }
+
+  private static String samplesToCsv(Stream<JRaplSample> samples) {
     return String.join(
-        " ",
-        "jrapl",
-        "(" + dateFormatter.format(date) + ")",
-        "[" + Thread.currentThread().getName() + "]:");
+        System.lineSeparator(),
+        SAMPLE_CSV_HEADER,
+        samples.map(s -> toCsv(s)).collect(joining(System.lineSeparator())));
   }
 
-  private static Logger getLogger() {
-    ConsoleHandler handler = new ConsoleHandler();
-    handler.setFormatter(
-        new Formatter() {
-          @Override
-          public String format(LogRecord record) {
-            return String.join(
-                " ",
-                makePrefix(new Date(record.getMillis())),
-                record.getMessage(),
-                System.lineSeparator());
-          }
-        });
-
-    Logger logger = Logger.getLogger("jrapl");
-    logger.setUseParentHandlers(false);
-
-    for (Handler hdlr : logger.getHandlers()) {
-      logger.removeHandler(hdlr);
-    }
-    logger.addHandler(handler);
-
-    return logger;
+  private static String diffsToCsv(Stream<JRaplDifference> differences) {
+    return String.join(
+        System.lineSeparator(),
+        DIFFERENCE_CSV_HEADER,
+        differences.map(d -> toCsv(d)).collect(joining(System.lineSeparator())));
   }
+
+  private static String toCsv(JRaplSample sample) {
+    final long timestamp = toMicros(sample.getTimestamp());
+    return toCsv(
+        sample.getReadingList().stream(), r -> String.format("%d,%s", timestamp, toCsv(r)));
+  }
+
+  private static String toCsv(JRaplDifference difference) {
+    final long start = toMicros(difference.getStart());
+    final long end = toMicros(difference.getEnd());
+    return toCsv(
+        difference.getReadingList().stream(), r -> String.format("%d,%d,%s", start, end, toCsv(r)));
+  }
+
+  private static String toCsv(JRaplReading reading) {
+    return String.join(
+        ",",
+        Double.toString(reading.getPackage()),
+        Double.toString(reading.getDram()),
+        Double.toString(reading.getCore()),
+        Double.toString(reading.getGpu()));
+  }
+
+  private static <T> String toCsv(Stream<T> t, Function<T, String> converter) {
+    return t.map(converter::apply).collect(joining(System.lineSeparator()));
+  }
+
+  private JRaplUtils() {}
 }
