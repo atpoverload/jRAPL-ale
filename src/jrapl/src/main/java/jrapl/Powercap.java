@@ -20,7 +20,6 @@ public final class Powercap {
   /** Returns an {@link JRaplSample} populated by parsing the string returned by {@ readNative}. */
   public static JRaplSample sample() {
     if (SOCKET_COUNT == 0) {
-      JRaplLogger.LOGGER.info("couldn't check the socket count; powercap likely not available");
       return JRaplSample.getDefaultInstance();
     }
     JRaplSample.Builder sample =
